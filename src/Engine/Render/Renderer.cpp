@@ -9,6 +9,12 @@
 void Renderer::init() {
     initWindow();
     initVulkan();
+
+    //TODO: move from renderer to world
+    loadModel("models/viking_room.obj", "models/", "textures/viking_room.png");
+    loadModel("models/elf/Elf01_posed.obj", "models/elf/", "textures/elf/");
+    models[1].scale = glm::vec3(0.01f);
+    models[1].rotation = glm::vec3(90.f, 0.0, 0.0);
 }
 
 void Renderer::initWindow() {
@@ -22,8 +28,6 @@ void Renderer::initWindow() {
 }
 
 void Renderer::initVulkan() {
-    loadModel("models/viking_room.obj", "models/", "textures/viking_room.png");
-    loadModel("models/elf/Elf01_posed.obj", "models/elf/", "textures/elf/");
     createInstance();
     setupDebugMessenger();
     createSurface();
@@ -32,10 +36,6 @@ void Renderer::initVulkan() {
     createSwapChain();
     createImageViews();
     createRenderPass();
-    models[1].scale = glm::vec3(0.01f);
-    models[1].rotation = glm::vec3(90.f, 0.0, 0.0);
-    //models[1].transform = glm::scale(models[1].transform, glm::vec3(0.01f));
-   // models[1].transform = glm::rotate(models[1].transform, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     createDescriptorSetLayout();
     createGraphicsPipeline();
     createCommandPool();
