@@ -14,8 +14,9 @@ void Renderer::init() {
     loadModel("models/elf/Elf01_posed.obj", "models/elf/", "textures/elf/");
 
     initVulkan();
+
     models[1].scale = glm::vec3(0.01f);
-    models[1].rotation = glm::vec3(90.f, 0.0, 0.0);
+    models[1].SetEulerAngle(glm::vec3(glm::radians(90.f), 0.0, 0.0));
 }
 
 void Renderer::initWindow() {
@@ -1259,7 +1260,7 @@ void Renderer::updateUniformBuffer(uint32_t currentImage) {
 
     std::vector<glm::mat4> modelMatrices;
     UniformBufferObject camera {};
-    camera.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    camera.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(10.f), glm::vec3(0.0f, 0.0f, 1.0f));
     camera.view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     camera.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
     camera.proj[1][1] *= -1;
@@ -1553,8 +1554,8 @@ void Renderer::Update(float dt)
     if (models.empty()) {
         return;
     }
-    //models[1].transform = glm::rotate(models[1].transform, dt * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    models[1].rotation.z += dt * 10.0;
+    models[1].AddEulerAngle(glm::vec3(0.f, 0.f, dt * 10.0));
+    models[1].translation.x += dt * 10.f;
     for (auto& model : models) {
         model.UpdatePushConstants();
     }
