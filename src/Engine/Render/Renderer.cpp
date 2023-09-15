@@ -8,11 +8,12 @@
 
 void Renderer::init() {
     initWindow();
-    initVulkan();
 
     //TODO: move from renderer to world
     loadModel("models/viking_room.obj", "models/", "textures/viking_room.png");
     loadModel("models/elf/Elf01_posed.obj", "models/elf/", "textures/elf/");
+
+    initVulkan();
     models[1].scale = glm::vec3(0.01f);
     models[1].rotation = glm::vec3(90.f, 0.0, 0.0);
 }
