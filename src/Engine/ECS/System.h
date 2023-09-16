@@ -1,10 +1,10 @@
 #pragma once
 #include <set>
-#include "Component.h"
+
+#include "EntityManager.h"
+
 class System
 {
-	std::set<ComponentType> reqTypes;
 public:
-	virtual void Update(float dt);
+	std::set<Entity> entities;
 };
-

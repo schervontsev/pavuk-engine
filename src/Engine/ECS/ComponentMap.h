@@ -1,16 +1,17 @@
 #pragma once
 #include "EntityManager.h"
+#include <unordered_map>
 
 class IComponentArray
 {
 public:
 	virtual ~IComponentArray() = default;
-	virtual void EntityDestroyed(Entity entity) = 0;
+	virtual void OnEntityDestroyed(Entity entity) = 0;
 };
 
 
 template<typename T>
-class ComponentMap : public IComponentMap
+class ComponentArray : public IComponentArray
 {
 public:
 	void InsertData(Entity entity, T component);
@@ -35,5 +36,5 @@ private:
 	std::unordered_map<size_t, Entity> indexToEntityMap;
 
 	// Total size of valid entries in the array.
-	size_t componentsSize;
+	size_t componentsSize = 0;
 };

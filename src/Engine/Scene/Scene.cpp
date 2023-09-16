@@ -14,6 +14,11 @@ Scene::Scene()
 	models.push_back(elf);
 }
 
+void Scene::Init()
+{
+
+}
+
 void Scene::Update(float dt)
 {
 	{

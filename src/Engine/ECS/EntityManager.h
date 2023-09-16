@@ -1,8 +1,7 @@
 #pragma once
+#include <array>
+#include <bitset>
 #include <queue>
-#include <vector>
-#include "Component.h"
-#include "System.h"
 
 using Entity = std::uint32_t;
 const Entity MAX_ENTITIES = 5000;
