@@ -18,10 +18,10 @@ void Renderer::initWindow() {
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }
 
-void Renderer::prepareWorld(World* newWorld)
+void Renderer::prepareScene(Scene* newScene)
 {
     //materials.clear();
-    //for (auto& mesh : world.models) {
+    //for (auto& mesh : scene.models) {
     //    for (auto& material : mesh.materials) {
     //        materials.push_back(material);
     //    }
@@ -32,7 +32,7 @@ void Renderer::prepareWorld(World* newWorld)
     //        indices.push_back(index);
     //    }
     //}
-    world = newWorld;
+    scene = newScene;
 }
 
 void Renderer::initVulkan() {
@@ -401,7 +401,7 @@ void Renderer::createDescriptorSetLayout() {
     bindings.push_back(uboLayoutBinding);
 
     uint32_t materialSize = 0;
-    for (auto& mesh : world->models) {
+    for (auto& mesh : scene->models) {
         materialSize += mesh.materials.size();
     }
 
@@ -665,7 +665,7 @@ void Renderer::loadTextureImage(Material& material, const std::string& fileName)
 }
 
 void Renderer::createTextureImageView() {
-    for (auto& mesh : world->models) {
+    for (auto& mesh : scene->models) {
         for (auto& material : mesh.materials) {
             material.textureImageView = createImageView(material.textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
         }
@@ -825,7 +825,7 @@ void Renderer::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t wi
 }
 
 void Renderer::createTextureImages() {
-    for (auto& mesh : world->models) {
+    for (auto& mesh : scene->models) {
         for (auto& material : mesh.materials) {
             loadTextureImage(material, material.texturePath);
         }
@@ -834,7 +834,7 @@ void Renderer::createTextureImages() {
 
 void Renderer::createVertexBuffer() {
     std::vector<Vertex> vertices;
-    for (auto& model : world->models) {
+    for (auto& model : scene->models) {
         vertices.insert(vertices.end(), model.vertices.begin(), model.vertices.end());
     }
     vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
@@ -857,7 +857,7 @@ void Renderer::createVertexBuffer() {
 
 void Renderer::createIndexBuffer() {
     std::vector<uint32_t> indices;
-    for (auto& model : world->models) {
+    for (auto& model : scene->models) {
         indices.insert(indices.end(), model.indices.begin(), model.indices.end());
     }
 
@@ -892,7 +892,7 @@ void Renderer::createUniformBuffers() {
 
 void Renderer::createDescriptorPool() {
     size_t materialSize = 0;
-    for (auto& mesh : world->models) {
+    for (auto& mesh : scene->models) {
         materialSize += mesh.materials.size();
     }
     std::array<vk::DescriptorPoolSize, 2> poolSizes {};
@@ -946,7 +946,7 @@ void Renderer::createDescriptorSets() {
 
         std::vector<vk::DescriptorImageInfo> imageInfos;
         size_t materialSize = 0;
-        for (auto& mesh : world->models) {
+        for (auto& mesh : scene->models) {
             materialSize += mesh.materials.size();
             for (const auto& material : mesh.materials) {
                 vk::DescriptorImageInfo imageInfo{};
@@ -1121,7 +1121,7 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
 
     uint32_t indicesSize = 0;
     uint32_t verticesSize = 0;
-    for (auto model : world->models) {
+    for (auto model : scene->models) {
         //upload the matrix to the GPU via push constants
         commandBuffer.pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(MeshPushConstants), &model.pushConstants);
         commandBuffer.drawIndexed(model.indices.size(), 1, indicesSize, verticesSize, 0);

@@ -1,11 +1,11 @@
 #pragma once
 #include <vector>
-#include "../World/Mesh.h"
+#include "../Scene/Mesh.h"
 #include "../Render/Material.h"
-class World
+class Scene
 {
 public:
-    World();
+    Scene();
 
 public:
     std::vector<Mesh> models;

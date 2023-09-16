@@ -1,7 +1,7 @@
-#include "World.h"
+#include "Scene.h"
 #include "Mesh.h"
 
-World::World()
+Scene::Scene()
 {
 	Mesh room;
 	room.loadModel(0, "models/viking_room.obj", "models/", "textures/viking_room.png");
@@ -15,7 +15,7 @@ World::World()
 	models.push_back(elf);
 }
 
-void World::Update(float dt)
+void Scene::Update(float dt)
 {
 	if (models.empty()) {
 		return;

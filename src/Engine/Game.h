@@ -1,6 +1,6 @@
 #pragma once
 #include "Render/Renderer.h"
-#include "World/World.h"
+#include "Scene/Scene.h"
 class Game
 {
 public:
@@ -10,6 +10,6 @@ public:
 	void mainLoop();
 private:
 	std::unique_ptr<Renderer> renderer;
-	std::unique_ptr<World> world;
+	std::unique_ptr<Scene> scene;
 };
 

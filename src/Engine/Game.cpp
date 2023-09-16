@@ -7,8 +7,8 @@ Game::Game()
 
 void Game::run()
 {
-    world = std::make_unique<World>();
-    renderer->prepareWorld(world.get());
+    scene = std::make_unique<Scene>();
+    renderer->prepareScene(scene.get());
     renderer->init();
     mainLoop();
     cleanup();
@@ -21,7 +21,7 @@ void Game::cleanup()
 
 void Game::mainLoop() {
     auto startTime = std::chrono::high_resolution_clock::now();
-    glm::mat4 worldMatrix = glm::mat4(1.f);
+    glm::mat4 sceneMatrix = glm::mat4(1.f);
     while (!renderer->WindowShouldClose()) {
         glfwPollEvents();
 
@@ -29,8 +29,8 @@ void Game::mainLoop() {
         float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
         startTime = currentTime;
 
-        world->Update(dt);
-        //world->UpdateTransform(worldMatrix);
+        scene->Update(dt);
+        //scene->UpdateTransform(sceneMatrix);
         renderer->Update(dt);
         renderer->drawFrame();
     }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Vertex.h"
-#include "../World/Mesh.h"
+#include "../Scene/Mesh.h"
 #include "Material.h"
 
 #define GLFW_INCLUDE_VULKAN
@@ -30,7 +30,7 @@
 #include <optional>
 #include <set>
 #include <unordered_map>
-#include "../World/World.h"
+#include "../Scene/Scene.h"
 
 const int WIDTH = 1280;
 const int HEIGHT = 720;
@@ -84,12 +84,12 @@ public:
     void WaitDevice();
 
 
-    void prepareWorld(World* world);
+    void prepareScene(Scene* scene);
 
 
 private:
     GLFWwindow* window;
-    World* world;
+    std::shared_ptr<Scene> scene;
 
     vk::UniqueInstance instance;
     VkDebugUtilsMessengerEXT callback;
