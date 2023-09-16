@@ -10,6 +10,6 @@ public:
 	void mainLoop();
 private:
 	std::unique_ptr<Renderer> renderer;
-	std::unique_ptr<Scene> scene;
+	std::shared_ptr<Scene> scene;
 };
 

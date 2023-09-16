@@ -7,8 +7,8 @@ Game::Game()
 
 void Game::run()
 {
-    scene = std::make_unique<Scene>();
-    renderer->prepareScene(scene.get());
+    scene = std::make_shared<Scene>();
+    renderer->SetScene(scene);
     renderer->init();
     mainLoop();
     cleanup();

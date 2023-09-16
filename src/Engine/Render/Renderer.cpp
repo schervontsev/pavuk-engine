@@ -18,20 +18,8 @@ void Renderer::initWindow() {
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }
 
-void Renderer::prepareScene(Scene* newScene)
+void Renderer::SetScene(const std::shared_ptr<Scene>& newScene)
 {
-    //materials.clear();
-    //for (auto& mesh : scene.models) {
-    //    for (auto& material : mesh.materials) {
-    //        materials.push_back(material);
-    //    }
-    //    for (auto& vertex : mesh.vertices) {
-    //        vertices.push_back(vertex);
-    //    }
-    //    for (auto& index : mesh.indices) {
-    //        indices.push_back(index);
-    //    }
-    //}
     scene = newScene;
 }
 
@@ -39,8 +27,10 @@ void Renderer::initVulkan() {
     createInstance();
     setupDebugMessenger();
     createSurface();
+
     pickPhysicalDevice();
     createLogicalDevice();
+
     createSwapChain();
     createImageViews();
     createRenderPass();
@@ -54,14 +44,23 @@ void Renderer::initVulkan() {
     createTextureImageView();
     createTextureSampler();
 
-    createVertexBuffer();
-    createIndexBuffer();
+    UpdateBuffers();
 
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
     createCommandBuffers();
+
     createSyncObjects();
+}
+
+void Renderer::UpdateBuffers()
+{
+    createVertexBuffer();
+    createIndexBuffer();
+    if (scene) {
+        scene->SetDirty(false);
+    }
 }
 
 void Renderer::cleanupSwapChain() {
@@ -1120,13 +1119,13 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
     uint32_t indicesSize = 0;
-    uint32_t verticesSize = 0;
+    int32_t verticesSize = 0;
     for (auto model : scene->models) {
         //upload the matrix to the GPU via push constants
         commandBuffer.pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(MeshPushConstants), &model.pushConstants);
-        commandBuffer.drawIndexed(model.indices.size(), 1, indicesSize, verticesSize, 0);
+        commandBuffer.drawIndexed((uint32_t)model.indices.size(), 1, indicesSize, verticesSize, 0);
         indicesSize = model.indices.size();
-        verticesSize = model.vertices.size();
+        verticesSize = (uint32_t)model.vertices.size();
     }
 
     commandBuffer.endRenderPass();
@@ -1453,5 +1452,7 @@ void Renderer::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMe
 
 void Renderer::Update(float dt)
 {
-    
+    if (scene && scene->IsDirty()) {
+        UpdateBuffers();
+    }
 }

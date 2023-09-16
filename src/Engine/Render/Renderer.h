@@ -84,7 +84,7 @@ public:
     void WaitDevice();
 
 
-    void prepareScene(Scene* scene);
+    void SetScene(const std::shared_ptr<Scene>& scene);
 
 
 private:
@@ -123,10 +123,6 @@ private:
     
     vk::Sampler textureSampler;
 
-    //std::vector<Material> materials;
-    //std::vector<Vertex> vertices;
-    //std::vector<uint32_t> indices;
-
     vk::Buffer vertexBuffer;
     vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;
@@ -157,6 +153,7 @@ private:
 
 
     void initVulkan();
+    void UpdateBuffers();
     void cleanupSwapChain();
     void recreateSwapChain();
     void createInstance();
