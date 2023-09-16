@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Vertex.h"
-#include "Mesh.h"
+#include "../World/Mesh.h"
 #include "Material.h"
 
 #define GLFW_INCLUDE_VULKAN
@@ -30,6 +30,7 @@
 #include <optional>
 #include <set>
 #include <unordered_map>
+#include "../World/World.h"
 
 const int WIDTH = 1280;
 const int HEIGHT = 720;
@@ -83,8 +84,12 @@ public:
     void WaitDevice();
 
 
+    void prepareWorld(World* world);
+
+
 private:
     GLFWwindow* window;
+    World* world;
 
     vk::UniqueInstance instance;
     VkDebugUtilsMessengerEXT callback;
@@ -118,15 +123,14 @@ private:
     
     vk::Sampler textureSampler;
 
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    //std::vector<Material> materials;
+    //std::vector<Vertex> vertices;
+    //std::vector<uint32_t> indices;
+
     vk::Buffer vertexBuffer;
     vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;
     vk::DeviceMemory indexBufferMemory;
-
-    std::vector<Mesh> models;
-    std::vector<Material> materials;
 
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
@@ -150,6 +154,7 @@ private:
         auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
     }
+
 
     void initVulkan();
     void cleanupSwapChain();
@@ -201,8 +206,6 @@ private:
     void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 
     void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
-
-    void loadModel(const std::string& modelPath, const std::string& modelDir, const std::string& texturePath = "");
 
     void createTextureImages();
 

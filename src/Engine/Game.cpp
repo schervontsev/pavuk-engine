@@ -7,6 +7,8 @@ Game::Game()
 
 void Game::run()
 {
+    world = std::make_unique<World>();
+    renderer->prepareWorld(world.get());
     renderer->init();
     mainLoop();
     cleanup();
@@ -27,7 +29,7 @@ void Game::mainLoop() {
         float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
         startTime = currentTime;
 
-        //world->Update(dt);
+        world->Update(dt);
         //world->UpdateTransform(worldMatrix);
         renderer->Update(dt);
         renderer->drawFrame();

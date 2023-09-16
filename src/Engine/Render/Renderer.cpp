@@ -3,20 +3,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
-
 void Renderer::init() {
     initWindow();
-
-    //TODO: move from renderer to world
-    loadModel("models/viking_room.obj", "models/", "textures/viking_room.png");
-    loadModel("models/elf/Elf01_posed.obj", "models/elf/", "textures/elf/");
-
     initVulkan();
-
-    models[1].scale = glm::vec3(0.01f);
-    models[1].SetEulerAngle(glm::vec3(glm::radians(90.f), 0.0, 0.0));
 }
 
 void Renderer::initWindow() {
@@ -27,6 +16,23 @@ void Renderer::initWindow() {
     window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+}
+
+void Renderer::prepareWorld(World* newWorld)
+{
+    //materials.clear();
+    //for (auto& mesh : world.models) {
+    //    for (auto& material : mesh.materials) {
+    //        materials.push_back(material);
+    //    }
+    //    for (auto& vertex : mesh.vertices) {
+    //        vertices.push_back(vertex);
+    //    }
+    //    for (auto& index : mesh.indices) {
+    //        indices.push_back(index);
+    //    }
+    //}
+    world = newWorld;
 }
 
 void Renderer::initVulkan() {
@@ -43,11 +49,14 @@ void Renderer::initVulkan() {
     createCommandPool();
     createDepthResources();
     createFramebuffers();
+
     createTextureImages();
     createTextureImageView();
     createTextureSampler();
+
     createVertexBuffer();
     createIndexBuffer();
+
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -391,9 +400,14 @@ void Renderer::createDescriptorSetLayout() {
     uboLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eVertex;
     bindings.push_back(uboLayoutBinding);
 
+    uint32_t materialSize = 0;
+    for (auto& mesh : world->models) {
+        materialSize += mesh.materials.size();
+    }
+
     vk::DescriptorSetLayoutBinding samplerLayoutBinding {};
     samplerLayoutBinding.binding = 1;
-    samplerLayoutBinding.descriptorCount = (uint32_t) materials.size();
+    samplerLayoutBinding.descriptorCount = materialSize;
     samplerLayoutBinding.descriptorType = vk::DescriptorType::eCombinedImageSampler; //eSampledImage? TODO
     samplerLayoutBinding.pImmutableSamplers = nullptr;
     samplerLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
@@ -651,8 +665,10 @@ void Renderer::loadTextureImage(Material& material, const std::string& fileName)
 }
 
 void Renderer::createTextureImageView() {
-    for (auto& material : materials) {
-        material.textureImageView = createImageView(material.textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+    for (auto& mesh : world->models) {
+        for (auto& material : mesh.materials) {
+            material.textureImageView = createImageView(material.textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+        }
     }
 }
 
@@ -808,150 +824,19 @@ void Renderer::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t wi
     endSingleTimeCommands(commandBuffer);
 }
 
-void Renderer::loadModel(const std::string& modelPath, const std::string& modelDir, const std::string& texturePath) {
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> modelMaterials;
-    std::string warn, err;
-
-    if (!tinyobj::LoadObj(&attrib, &shapes, &modelMaterials, &warn, &err, modelPath.c_str(), modelDir.c_str())) {
-        throw std::runtime_error(warn + err);
-    }
-
-    Mesh model {};
-    model.firstIndex = (uint32_t)indices.size();
-
-    if (!models.empty()) {
-        float scale = 0.02f;
-        /*model.SetPos(glm::vec3(50.f, 0.f, 0.f));
-        model.SetRotation(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
-        model.SetScale(glm::vec3(scale, scale, scale));*/
-    }
-
-    const int materialsSize = (int)materials.size();
-
-    vk::DeviceSize lastOffset = 0;
-    if (modelMaterials.empty()) {
-        Material material {};
-        material.texturePath = texturePath;
-        materials.push_back(material);
-    } else {
-        for (const auto& material : modelMaterials) {
-            Material newMaterial {};
-            newMaterial.texturePath = texturePath + material.diffuse_texname;
-            materials.push_back(newMaterial);
-        }
-    }
-
-    std::unordered_map<Vertex, uint32_t> uniqueVertices {};
-    for (const auto& shape : shapes) {
-        for (const auto& index : shape.mesh.indices) {
-            Vertex vertex {};
-            vertex.pos = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
-            };
-
-            vertex.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-            };
-
-            int matId = shape.mesh.material_ids[model.indexCount / 3];
-            if (matId < 0) {
-                matId = 0;
-            }
-            vertex.textureIndex = materialsSize + matId;
-
-            vertex.color = {1.0f, 1.0f, 1.0f};
-
-            if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                vertices.push_back(vertex);
-            }
-
-            indices.push_back(uniqueVertices[vertex]);
-            model.indexCount ++;
-        }
-    }
-    models.push_back(model);
-}
-
-void Renderer::LoadCube() {
-    std::unordered_map<Vertex, uint32_t> uniqueVertices {};
-    vertices.clear();
-    indices.clear();
-
-    {
-        Vertex vertex {};
-        vertex.pos = {0.f, -0.5f, 0.f};
-        vertex.color = {1.0f, 0.0f, 0.0f};
-        if (uniqueVertices.count(vertex) == 0) {
-            uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-            vertices.push_back(vertex);
-        }
-        indices.push_back(uniqueVertices[vertex]);
-    }
-    {
-        Vertex vertex {};
-        vertex.pos = {0.5f, 0.5f, 0.f};
-        vertex.color = {0.0f, 1.0f, 0.0f};
-        if (uniqueVertices.count(vertex) == 0) {
-            uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-            vertices.push_back(vertex);
-        }
-        indices.push_back(uniqueVertices[vertex]);
-    }
-    {
-        Vertex vertex {};
-        vertex.pos = {-0.5f, 0.5f, 0.f};
-        vertex.color = {0.0f, 0.0f, 1.0f};
-        if (uniqueVertices.count(vertex) == 0) {
-            uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-            vertices.push_back(vertex);
-        }
-        indices.push_back(uniqueVertices[vertex]);
-    }
-    {
-        Vertex vertex {};
-        vertex.pos = {0.2f, -0.5f, 0.5f};
-        vertex.color = {1.0f, 0.0f, 0.0f};
-        if (uniqueVertices.count(vertex) == 0) {
-            uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-            vertices.push_back(vertex);
-        }
-        indices.push_back(uniqueVertices[vertex]);
-    }
-    {
-        Vertex vertex {};
-        vertex.pos = {0.7f, 0.5f, 0.5f};
-        vertex.color = {0.0f, 1.0f, 0.0f};
-        if (uniqueVertices.count(vertex) == 0) {
-            uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-            vertices.push_back(vertex);
-        }
-        indices.push_back(uniqueVertices[vertex]);
-    }
-    {
-        Vertex vertex {};
-        vertex.pos = {-0.3f, 0.5f, 0.5f};
-        vertex.color = {0.0f, 0.0f, 1.0f};
-        if (uniqueVertices.count(vertex) == 0) {
-            uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-            vertices.push_back(vertex);
-        }
-        indices.push_back(uniqueVertices[vertex]);
-    }
-}
-
 void Renderer::createTextureImages() {
-    for (auto& material : materials) {
-        loadTextureImage(material, material.texturePath);
+    for (auto& mesh : world->models) {
+        for (auto& material : mesh.materials) {
+            loadTextureImage(material, material.texturePath);
+        }
     }
 }
 
 void Renderer::createVertexBuffer() {
+    std::vector<Vertex> vertices;
+    for (auto& model : world->models) {
+        vertices.insert(vertices.end(), model.vertices.begin(), model.vertices.end());
+    }
     vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
     vk::Buffer stagingBuffer;
@@ -971,6 +856,11 @@ void Renderer::createVertexBuffer() {
 }
 
 void Renderer::createIndexBuffer() {
+    std::vector<uint32_t> indices;
+    for (auto& model : world->models) {
+        indices.insert(indices.end(), model.indices.begin(), model.indices.end());
+    }
+
     vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
     vk::Buffer stagingBuffer;
@@ -1001,11 +891,15 @@ void Renderer::createUniformBuffers() {
 }
 
 void Renderer::createDescriptorPool() {
+    size_t materialSize = 0;
+    for (auto& mesh : world->models) {
+        materialSize += mesh.materials.size();
+    }
     std::array<vk::DescriptorPoolSize, 2> poolSizes {};
     poolSizes[0].type = vk::DescriptorType::eUniformBuffer;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     poolSizes[1].type = vk::DescriptorType::eCombinedImageSampler;
-    poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * static_cast<uint32_t>(materials.size());
+    poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * static_cast<uint32_t>(materialSize);
 
     vk::DescriptorPoolCreateInfo poolInfo {};
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
@@ -1051,19 +945,23 @@ void Renderer::createDescriptorSets() {
         descriptorWrites.push_back(uniformSet);
 
         std::vector<vk::DescriptorImageInfo> imageInfos;
-        for (const auto& material : materials) {
-            vk::DescriptorImageInfo imageInfo {};
-            imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-            imageInfo.imageView = material.textureImageView;
-            imageInfo.sampler = textureSampler;
-            imageInfos.push_back(imageInfo);
+        size_t materialSize = 0;
+        for (auto& mesh : world->models) {
+            materialSize += mesh.materials.size();
+            for (const auto& material : mesh.materials) {
+                vk::DescriptorImageInfo imageInfo{};
+                imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+                imageInfo.imageView = material.textureImageView;
+                imageInfo.sampler = textureSampler;
+                imageInfos.push_back(imageInfo);
+            }
         }
         auto descSet = vk::WriteDescriptorSet {};
         descSet.dstSet = descriptorSets[i];
         descSet.dstBinding = 1;
         descSet.dstArrayElement = 0;
         descSet.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-        descSet.descriptorCount = (static_cast<uint32_t>(materials.size()));
+        descSet.descriptorCount = (static_cast<uint32_t>(materialSize));
         descSet.pImageInfo = imageInfos.data();
         descriptorWrites.push_back(descSet);
 
@@ -1221,10 +1119,14 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
 
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-    for (auto model : models) {
+    uint32_t indicesSize = 0;
+    uint32_t verticesSize = 0;
+    for (auto model : world->models) {
         //upload the matrix to the GPU via push constants
         commandBuffer.pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(MeshPushConstants), &model.pushConstants);
-        commandBuffer.drawIndexed(model.indexCount, 1, model.firstIndex, 0, 0);
+        commandBuffer.drawIndexed(model.indices.size(), 1, indicesSize, verticesSize, 0);
+        indicesSize = model.indices.size();
+        verticesSize = model.vertices.size();
     }
 
     commandBuffer.endRenderPass();
@@ -1551,12 +1453,5 @@ void Renderer::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMe
 
 void Renderer::Update(float dt)
 {
-    if (models.empty()) {
-        return;
-    }
-    models[1].AddEulerAngle(glm::vec3(0.f, 0.f, dt * 10.0));
-    models[1].translation.x += dt * 10.f;
-    for (auto& model : models) {
-        model.UpdatePushConstants();
-    }
+    
 }
