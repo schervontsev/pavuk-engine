@@ -3,8 +3,6 @@
 #include "../Components/TransformComponent.h"
 #include "../Components/RenderComponent.h"
 
-extern ECSManager ecsManager;
-
 void RenderSystem::Update(float dt)
 {
 	for (auto const& entity : entities) {

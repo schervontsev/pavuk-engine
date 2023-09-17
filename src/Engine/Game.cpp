@@ -3,8 +3,6 @@
 #include "ECS/Components/RenderComponent.h"
 #include "ECS/Components/TransformComponent.h"
 
-extern ECSManager ecsManager;
-
 Game::Game()
 {
     renderer = std::make_unique<Renderer>();

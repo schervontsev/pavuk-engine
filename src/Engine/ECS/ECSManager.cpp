@@ -4,6 +4,10 @@ ECSManager ecsManager;
 
 void ECSManager::Init()
 {
+	componentManager = std::make_unique<ComponentManager>();
+	entityManager = std::make_unique<EntityManager>();
+	systemManager = std::make_unique<SystemManager>();
+
 }
 
 Entity ECSManager::CreateEntity()
@@ -19,50 +23,3 @@ void ECSManager::DestroyEntity(Entity entity)
 
 }
 
-template<typename T> void ECSManager::RegisterComponent()
-{
-	componentManager->RegisterComponent<T>();
-}
-
-template<typename T> void ECSManager::AddComponent(Entity entity, T component)
-{
-	componentManager->AddComponent<T>(entity, component);
-
-	auto signature = entityManager->GetSignature(entity);
-	signature.set(componentManager->GetComponentType<T>(), true);
-	entityManager->SetSignature(entity, signature);
-
-	systemManager->OnEntitySignatureChanged(entity, signature);
-
-}
-
-template<typename T> void ECSManager::RemoveComponent(Entity entity)
-{
-	componentManager->RemoveComponent<T>(entity);
-
-	auto signature = entityManager->GetSignature(entity);
-	signature.set(componentManager->GetComponentType<T>(), false);
-	entityManager->SetSignature(entity, signature);
-
-	systemManager->OnEntitySignatureChanged(entity, signature);
-}
-
-template<typename T> T& ECSManager::GetComponent(Entity entity)
-{
-	return componentManager->GetComponent<T>(entity);
-}
-
-template<typename T> ComponentType ECSManager::GetComponentType()
-{
-	return componentManager->GetComponentType<T>();
-}
-
-template<typename T> std::shared_ptr<T> ECSManager::RegisterSystem()
-{
-	return systemManager->RegisterSystem<T>();
-}
-
-template<typename T> void ECSManager::SetSystemSignature(Signature signature)
-{
-	systemManager->SetSignature<T>(signature);
-}

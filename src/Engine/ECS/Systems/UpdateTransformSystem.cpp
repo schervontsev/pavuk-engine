@@ -3,8 +3,6 @@
 #include "../ECSManager.h"
 #include <glm/gtx/quaternion.hpp>
 
-extern ECSManager ecsManager;
-
 void UpdateTransformSystem::Update(float dt)
 {
 	for (auto const& entity : entities) {

@@ -4,8 +4,6 @@
 #include "../ECS/Components/TransformComponent.h"
 #include "../ECS/Components/RenderComponent.h"
 
-extern ECSManager ecsManager;
-
 Scene::Scene()
 {
 	Mesh room;
