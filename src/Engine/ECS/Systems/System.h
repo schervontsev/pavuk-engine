@@ -1,7 +1,7 @@
 #pragma once
 #include <set>
 
-#include "EntityManager.h"
+#include "../EntityManager.h"
 
 class System
 {

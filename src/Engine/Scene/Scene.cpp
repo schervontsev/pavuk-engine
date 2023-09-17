@@ -1,11 +1,17 @@
 #include "Scene.h"
 #include "Mesh.h"
+#include "../ECS/ECSManager.h"
+#include "../ECS/Components/TransformComponent.h"
+#include "../ECS/Components/RenderComponent.h"
+
+extern ECSManager ecsManager;
 
 Scene::Scene()
 {
 	Mesh room;
 	room.loadModel(0, "models/viking_room.obj", "models/", "textures/viking_room.png");
 	models.push_back(room);
+	ecsManager.CreateEntity();
 
 	Mesh elf;
 	elf.loadModel(room.materials.size(), "models/elf/Elf01_posed.obj", "models/elf/", "textures/elf/");
@@ -16,11 +22,14 @@ Scene::Scene()
 
 void Scene::Init()
 {
-
+	auto entity = ecsManager.CreateEntity();
+	ecsManager.AddComponent(entity, RenderComponent{});
+	ecsManager.AddComponent(entity, TransformComponent{});
 }
 
 void Scene::Update(float dt)
 {
+
 	{
 		//TODO: Debug logic
 		timeFromStart += dt;

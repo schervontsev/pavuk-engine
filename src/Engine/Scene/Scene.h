@@ -2,9 +2,6 @@
 #include <vector>
 #include "../Scene/Mesh.h"
 #include "../Render/Material.h"
-class SystemManager;
-class EntityManager;
-class ComponentManager;
 
 class Scene
 {
@@ -23,8 +20,4 @@ public:
 private:
     bool isDirty = false;
     double timeFromStart = 0.f;
-
-    std::unique_ptr<ComponentManager> componentManager;
-    std::unique_ptr<SystemManager> systemManager;
-    std::unique_ptr<EntityManager> entityManager;
 };
