@@ -56,6 +56,7 @@ void Renderer::initVulkan() {
 
 void Renderer::UpdateBuffers()
 {
+    //TODO: get buffers from render system
     createVertexBuffer();
     createIndexBuffer();
     if (scene) {

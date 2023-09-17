@@ -55,6 +55,7 @@ void Game::InitECS()
 
     renderSystem = ecsManager.RegisterSystem<RenderSystem>();
     updateTransformSystem = ecsManager.RegisterSystem<UpdateTransformSystem>();
+    loadMeshSystem = ecsManager.RegisterSystem<LoadMeshSystem>();
 
     Signature renderSignature;
     renderSignature.set(ecsManager.GetComponentType<RenderComponent>());
@@ -62,5 +63,10 @@ void Game::InitECS()
     ecsManager.SetSystemSignature<RenderSystem>(renderSignature);
 
     Signature transformSignature;
+    transformSignature.set(ecsManager.GetComponentType<TransformComponent>());
     ecsManager.SetSystemSignature<UpdateTransformSystem>(transformSignature);
+
+    Signature loadMeshSignature;
+    loadMeshSignature.set(ecsManager.GetComponentType<RenderComponent>());
+    ecsManager.SetSystemSignature<LoadMeshSystem>(loadMeshSignature);
 }

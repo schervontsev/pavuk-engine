@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Engine\ECS\Systems\LoadMeshSystem.cpp" />
     <ClCompile Include="src\Engine\ECS\ECSManager.cpp" />
     <ClCompile Include="src\Engine\ECS\Systems\RenderSystem.cpp" />
     <ClCompile Include="src\Engine\ECS\ComponentMap.cpp" />
@@ -36,6 +37,7 @@
     <ClCompile Include="src\Engine\ECS\Systems\UpdateTransformSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Engine\ECS\Systems\LoadMeshSystem.h" />
     <ClInclude Include="src\Engine\ECS\Components\RenderComponent.h" />
     <ClInclude Include="src\Engine\ECS\ECSManager.h" />
     <ClInclude Include="src\Engine\ECS\Systems\RenderSystem.h" />

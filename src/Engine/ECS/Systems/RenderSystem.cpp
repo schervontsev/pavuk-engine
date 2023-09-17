@@ -14,3 +14,21 @@ void RenderSystem::Update(float dt)
 	}
 
 }
+
+std::vector<Vertex> RenderSystem::GetVertices()
+{
+	std::vector<Vertex> result;
+	for (auto const& entity : entities) {
+		auto& render = ecsManager.GetComponent<RenderComponent>(entity);
+		result.insert(result.end(), render.vertices.begin(), render.vertices.end());
+	}
+}
+
+std::vector<uint32_t> RenderSystem::GetIndices()
+{
+	std::vector<Vertex> result;
+	for (auto const& entity : entities) {
+		auto& render = ecsManager.GetComponent<RenderComponent>(entity);
+		result.insert(result.end(), render.indices.begin(), render.indices.end());
+	}
+}
