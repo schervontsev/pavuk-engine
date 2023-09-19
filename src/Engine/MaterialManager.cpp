@@ -15,11 +15,12 @@ MaterialManager* MaterialManager::Instance()
 uint32_t MaterialManager::AddMaterial(const Material& material)
 {
     const auto result = lastId;
+    materials.push_back(material);
 	materials[lastId++] = material;
     return result;
 }
 
 Material MaterialManager::GetMaterial(uint32_t val)
 {
-    return materials[val];
+    return materials[materialsById[val]];
 }

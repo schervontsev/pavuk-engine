@@ -403,9 +403,6 @@ void Renderer::createDescriptorSetLayout() {
     bindings.push_back(uboLayoutBinding);
 
     uint32_t materialSize = MaterialManager::Instance()->GetMaterialCount();
-    //for (auto& mesh : scene->models) {
-    //    materialSize += mesh.materials.size();
-    //}
 
     vk::DescriptorSetLayoutBinding samplerLayoutBinding {};
     samplerLayoutBinding.binding = 1;
@@ -667,10 +664,9 @@ void Renderer::loadTextureImage(Material& material, const std::string& fileName)
 }
 
 void Renderer::createTextureImageView() {
-    for (auto& mesh : scene->models) {
-        for (auto& material : mesh.materials) {
-            material.textureImageView = createImageView(material.textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
-        }
+    
+    for (auto& material : MaterialManager::Instance()->GetMaterials()) {
+        material.textureImageView = createImageView(material.textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
     }
 }
 
@@ -827,10 +823,8 @@ void Renderer::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t wi
 }
 
 void Renderer::createTextureImages() {
-    for (auto& mesh : scene->models) {
-        for (auto& material : mesh.materials) {
-            loadTextureImage(material, material.texturePath);
-        }
+    for (auto& material : MaterialManager::Instance()->GetMaterials()) {
+        loadTextureImage(material, material.texturePath);
     }
 }
 
@@ -893,10 +887,7 @@ void Renderer::createUniformBuffers() {
 }
 
 void Renderer::createDescriptorPool() {
-    size_t materialSize = 0;
-    for (auto& mesh : scene->models) {
-        materialSize += mesh.materials.size();
-    }
+    size_t materialSize = MaterialManager::Instance()->GetMaterialCount();
     std::array<vk::DescriptorPoolSize, 2> poolSizes {};
     poolSizes[0].type = vk::DescriptorType::eUniformBuffer;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
@@ -947,16 +938,13 @@ void Renderer::createDescriptorSets() {
         descriptorWrites.push_back(uniformSet);
 
         std::vector<vk::DescriptorImageInfo> imageInfos;
-        size_t materialSize = 0;
-        for (auto& mesh : scene->models) {
-            materialSize += mesh.materials.size();
-            for (const auto& material : mesh.materials) {
-                vk::DescriptorImageInfo imageInfo{};
-                imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-                imageInfo.imageView = material.textureImageView;
-                imageInfo.sampler = textureSampler;
-                imageInfos.push_back(imageInfo);
-            }
+        size_t materialSize = MaterialManager::Instance()->GetMaterialCount();
+        for (auto& material : MaterialManager::Instance()->GetMaterials()) {
+            vk::DescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+            imageInfo.imageView = material.textureImageView;
+            imageInfo.sampler = textureSampler;
+            imageInfos.push_back(imageInfo);
         }
         auto descSet = vk::WriteDescriptorSet {};
         descSet.dstSet = descriptorSets[i];
