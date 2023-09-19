@@ -6,6 +6,7 @@
 #include "../../Render/Material.h"
 #include "../../Render/Vertex.h"
 #include "../Components/RenderComponent.h"
+#include "../../MaterialManager.h"
 
 void LoadMeshSystem::Load()
 {
@@ -30,13 +31,13 @@ void LoadMeshSystem::LoadModel(RenderComponent& render, int& indexCount, int& te
     if (modelMaterials.empty()) {
         Material material{};
         material.texturePath = render.texturesDir;
-        render.materials.push_back(material);
+        render.materials.push_back(MaterialManager::Instance()->AddMaterial(material));
     }
     else {
         for (const auto& material : modelMaterials) {
             Material newMaterial{};
             newMaterial.texturePath = render.texturesDir + material.diffuse_texname;
-            render.materials.push_back(newMaterial);
+            render.materials.push_back(MaterialManager::Instance()->AddMaterial(newMaterial));
         }
     }
 

@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "../MaterialManager.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -44,14 +45,15 @@ void Renderer::initVulkan() {
     createTextureImageView();
     createTextureSampler();
 
-    UpdateBuffers();
-
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
     createCommandBuffers();
 
     createSyncObjects();
+
+    UpdateBuffers();
+
 }
 
 void Renderer::UpdateBuffers()
@@ -400,10 +402,10 @@ void Renderer::createDescriptorSetLayout() {
     uboLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eVertex;
     bindings.push_back(uboLayoutBinding);
 
-    uint32_t materialSize = 0;
-    for (auto& mesh : scene->models) {
-        materialSize += mesh.materials.size();
-    }
+    uint32_t materialSize = MaterialManager::Instance()->GetMaterialCount();
+    //for (auto& mesh : scene->models) {
+    //    materialSize += mesh.materials.size();
+    //}
 
     vk::DescriptorSetLayoutBinding samplerLayoutBinding {};
     samplerLayoutBinding.binding = 1;

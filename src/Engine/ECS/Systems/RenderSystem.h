@@ -1,5 +1,6 @@
 #pragma once
 #include "System.h"
+
 struct Vertex;
 
 class RenderSystem : public System

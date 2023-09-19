@@ -2,6 +2,7 @@
 #include "../ECSManager.h"
 #include "../Components/TransformComponent.h"
 #include "../Components/RenderComponent.h"
+#include "../../Render/Vertex.h"
 
 void RenderSystem::Update(float dt)
 {
@@ -22,13 +23,15 @@ std::vector<Vertex> RenderSystem::GetVertices()
 		auto& render = ecsManager.GetComponent<RenderComponent>(entity);
 		result.insert(result.end(), render.vertices.begin(), render.vertices.end());
 	}
+	return result;
 }
 
 std::vector<uint32_t> RenderSystem::GetIndices()
 {
-	std::vector<Vertex> result;
+	std::vector<uint32_t> result;
 	for (auto const& entity : entities) {
 		auto& render = ecsManager.GetComponent<RenderComponent>(entity);
 		result.insert(result.end(), render.indices.begin(), render.indices.end());
 	}
+	return result;
 }

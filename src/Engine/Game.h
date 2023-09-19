@@ -4,7 +4,8 @@
 //systems
 #include "ECS/Systems/RenderSystem.h"
 #include "ECS/Systems/UpdateTransformSystem.h"
-class LoadMeshSystem;
+#include "ECS/Systems/LoadMeshSystem.h"
+
 
 class Game
 {

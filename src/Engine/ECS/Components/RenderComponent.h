@@ -12,5 +12,5 @@ struct RenderComponent {
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 
-	std::vector<Material> materials; //TODO: should only have material handle
+	std::vector<uint32_t> materials;
 };
