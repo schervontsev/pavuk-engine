@@ -1,7 +1,7 @@
 #include "MaterialManager.h"
 
-static MaterialManager* _instance;
-static std::mutex _mutex;
+MaterialManager* MaterialManager::_instance(nullptr);
+std::mutex MaterialManager::_mutex;
 
 MaterialManager* MaterialManager::Instance()
 {

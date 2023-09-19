@@ -3,6 +3,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include "../ECS/Systems/RenderSystem.h"
 
 void Renderer::init() {
     initWindow();
@@ -22,6 +23,11 @@ void Renderer::initWindow() {
 void Renderer::SetScene(const std::shared_ptr<Scene>& newScene)
 {
     scene = newScene;
+}
+
+void Renderer::SetRenderSystem(const std::shared_ptr<RenderSystem>& newRenderSystem)
+{
+    renderSystem = newRenderSystem;
 }
 
 void Renderer::initVulkan() {
@@ -51,16 +57,21 @@ void Renderer::initVulkan() {
     createCommandBuffers();
 
     createSyncObjects();
-
-    UpdateBuffers();
-
 }
 
 void Renderer::UpdateBuffers()
 {
-    //TODO: get buffers from render system
-    createVertexBuffer();
-    createIndexBuffer();
+    if (!scene || !scene->IsDirty()) {
+        return;
+    }
+    if (!renderSystem) {
+        assert(renderSystem);
+        return;
+    }
+    auto vertices = renderSystem->GetVertices();
+    auto indices = renderSystem->GetIndices();
+    createVertexBuffer(vertices);
+    createIndexBuffer(indices);
     if (scene) {
         scene->SetDirty(false);
     }
@@ -828,11 +839,7 @@ void Renderer::createTextureImages() {
     }
 }
 
-void Renderer::createVertexBuffer() {
-    std::vector<Vertex> vertices;
-    for (auto& model : scene->models) {
-        vertices.insert(vertices.end(), model.vertices.begin(), model.vertices.end());
-    }
+void Renderer::createVertexBuffer(const std::vector<Vertex>& vertices) {
     vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
     vk::Buffer stagingBuffer;
@@ -851,12 +858,7 @@ void Renderer::createVertexBuffer() {
     device->freeMemory(stagingBufferMemory);
 }
 
-void Renderer::createIndexBuffer() {
-    std::vector<uint32_t> indices;
-    for (auto& model : scene->models) {
-        indices.insert(indices.end(), model.indices.begin(), model.indices.end());
-    }
-
+void Renderer::createIndexBuffer(const std::vector<uint32_t>& indices) {
     vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
     vk::Buffer stagingBuffer;
@@ -1109,15 +1111,7 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
 
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-    uint32_t indicesSize = 0;
-    int32_t verticesSize = 0;
-    for (auto model : scene->models) {
-        //upload the matrix to the GPU via push constants
-        commandBuffer.pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(MeshPushConstants), &model.pushConstants);
-        commandBuffer.drawIndexed((uint32_t)model.indices.size(), 1, indicesSize, verticesSize, 0);
-        indicesSize = model.indices.size();
-        verticesSize = (uint32_t)model.vertices.size();
-    }
+    renderSystem->UpdateCommandBuffer(commandBuffer, pipelineLayout);
 
     commandBuffer.endRenderPass();
 
@@ -1443,7 +1437,5 @@ void Renderer::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMe
 
 void Renderer::Update(float dt)
 {
-    if (scene && scene->IsDirty()) {
-        UpdateBuffers();
-    }
+
 }

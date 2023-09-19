@@ -32,6 +32,7 @@
 #include <unordered_map>
 #include "../Scene/Scene.h"
 
+class RenderSystem;
 const int WIDTH = 1280;
 const int HEIGHT = 720;
 
@@ -85,9 +86,12 @@ public:
 
 
     void SetScene(const std::shared_ptr<Scene>& scene);
+    void SetRenderSystem(const std::shared_ptr<RenderSystem>& renderSystem);
 
+    void UpdateBuffers();
 
 private:
+    std::shared_ptr<RenderSystem> renderSystem;
     GLFWwindow* window;
     std::shared_ptr<Scene> scene;
 
@@ -153,7 +157,6 @@ private:
 
 
     void initVulkan();
-    void UpdateBuffers();
     void cleanupSwapChain();
     void recreateSwapChain();
     void createInstance();
@@ -206,9 +209,9 @@ private:
 
     void createTextureImages();
 
-    void createVertexBuffer();
+    void createVertexBuffer(const std::vector<Vertex>& vertices);
 
-    void createIndexBuffer();
+    void createIndexBuffer(const std::vector<uint32_t>& indices);
 
     void createUniformBuffers();
 

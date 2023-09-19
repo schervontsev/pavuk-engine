@@ -35,7 +35,6 @@
     <ClCompile Include="src\Engine\Render\Vertex.cpp" />
     <ClCompile Include="src\Engine\ECS\Systems\System.cpp" />
     <ClCompile Include="src\Engine\ECS\SystemManager.cpp" />
-    <ClCompile Include="src\Engine\ECS\Systems\UpdateTransformSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engine\MaterialManager.h" />
@@ -55,7 +54,6 @@
     <ClInclude Include="src\Engine\Scene\Scene.h" />
     <ClInclude Include="src\Engine\ECS\SystemManager.h" />
     <ClInclude Include="src\Engine\ECS\Components\TransformComponent.h" />
-    <ClInclude Include="src\Engine\ECS\Systems\UpdateTransformSystem.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

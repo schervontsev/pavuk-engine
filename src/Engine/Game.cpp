@@ -14,7 +14,9 @@ void Game::run()
     scene = std::make_shared<Scene>();
     scene->Init();
     renderer->SetScene(scene);
+    renderer->SetRenderSystem(renderSystem);
     renderer->init();
+    renderer->UpdateBuffers();
     mainLoop();
     cleanup();
 }
@@ -35,11 +37,11 @@ void Game::mainLoop() {
         startTime = currentTime;
 
         scene->Update(dt); //TODO: will be moved to ecs?
-
-        updateTransformSystem->Update(dt);
-        renderSystem->Update(dt);
+        
+        renderSystem->UpdateTransform(dt);
 
         renderer->Update(dt);
+        renderer->UpdateBuffers();
         renderer->drawFrame();
     }
 
@@ -54,17 +56,12 @@ void Game::InitECS()
     ecsManager.RegisterComponent<TransformComponent>();
 
     renderSystem = ecsManager.RegisterSystem<RenderSystem>();
-    updateTransformSystem = ecsManager.RegisterSystem<UpdateTransformSystem>();
     loadMeshSystem = ecsManager.RegisterSystem<LoadMeshSystem>();
 
     Signature renderSignature;
     renderSignature.set(ecsManager.GetComponentType<RenderComponent>());
     renderSignature.set(ecsManager.GetComponentType<TransformComponent>());
     ecsManager.SetSystemSignature<RenderSystem>(renderSignature);
-
-    Signature transformSignature;
-    transformSignature.set(ecsManager.GetComponentType<TransformComponent>());
-    ecsManager.SetSystemSignature<UpdateTransformSystem>(transformSignature);
 
     Signature loadMeshSignature;
     loadMeshSignature.set(ecsManager.GetComponentType<RenderComponent>());

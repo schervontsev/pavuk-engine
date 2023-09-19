@@ -3,7 +3,6 @@
 #include "Scene/Scene.h"
 //systems
 #include "ECS/Systems/RenderSystem.h"
-#include "ECS/Systems/UpdateTransformSystem.h"
 #include "ECS/Systems/LoadMeshSystem.h"
 
 
@@ -21,7 +20,6 @@ private:
 
 	//systems
 	std::shared_ptr<RenderSystem> renderSystem;
-	std::shared_ptr<UpdateTransformSystem> updateTransformSystem;
 	std::shared_ptr<LoadMeshSystem> loadMeshSystem;
 };
 
