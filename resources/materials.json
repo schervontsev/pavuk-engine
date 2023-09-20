@@ -1,0 +1,22 @@
+[
+	{
+		"id": "viking_room",
+		"path": "textures/viking_room.png"
+	},
+	{
+		"id": "elf_hair",
+		"path": "textures/elf/Hair_tex_001.png"
+	},
+	{
+		"id": "elf_face",
+		"path": "textures/elf/Face_tex_002_toObj.png"
+	},
+	{
+		"id": "elf_body",
+		"path": "textures/elf/Body_tex_003.png"
+	},
+	{
+		"id": "elf_ce",
+		"path": "textures/elf/ce.png"
+	},
+]

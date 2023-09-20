@@ -15,7 +15,10 @@ public:
 
 	static MaterialManager* Instance();
 
-	uint32_t AddMaterial(const Material& material);
+	void LoadMaterials();
+
+	uint32_t AddMaterial(const std::string& id, const Material& material);
+
 	Material GetMaterial(uint32_t val); //TODO: do not return by value
 	std::vector<Material>& GetMaterials() { return materials; };
 
@@ -23,8 +26,9 @@ public:
 	uint32_t GetMaterialCount() const { return materials.size(); }
 
 private:
-	std::unordered_map<uint32_t, uint32_t> materialsById;
+	std::unordered_map<uint32_t, uint32_t> materialsByHandle;
+	std::unordered_map<std::string, uint32_t> materialHandlesById;
 	std::vector<Material> materials;
-	uint32_t lastId = 0;
+	uint32_t nextId = 0;
 };
 

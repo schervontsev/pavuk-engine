@@ -54,6 +54,7 @@
     <ClInclude Include="src\Engine\Scene\Scene.h" />
     <ClInclude Include="src\Engine\ECS\SystemManager.h" />
     <ClInclude Include="src\Engine\ECS\Components\TransformComponent.h" />
+    <ClInclude Include="src\Engine\Utils\json.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

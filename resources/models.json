@@ -1,0 +1,19 @@
+[
+	{
+		"id": "viking_room",
+		"path": "models/viking_room.obj",
+		"materials": [
+			"viking_room"
+		]
+	},
+	{
+		"id": "elf",
+		"path": "models/elf/Elf01_posed.obj",
+		"materials": [
+			"elf_hair",
+			"elf_face",
+			"elf_body",
+			"elf_ce"
+		]
+	}
+]
