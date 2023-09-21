@@ -1,7 +1,7 @@
 #pragma once
 #include <mutex>
 
-#include "Render/Material.h"
+#include "../Render/Material.h"
 class MaterialManager
 {
 private:
@@ -19,9 +19,9 @@ public:
 
 	uint32_t AddMaterial(const std::string& id, const Material& material);
 
+	uint32_t GetMaterialHandle(const std::string& id);
 	Material GetMaterial(uint32_t val); //TODO: do not return by value
 	std::vector<Material>& GetMaterials() { return materials; };
-
 
 	uint32_t GetMaterialCount() const { return materials.size(); }
 

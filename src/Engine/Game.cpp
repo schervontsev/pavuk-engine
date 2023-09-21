@@ -1,4 +1,6 @@
 #include "Game.h"
+
+#include "MaterialManager.h"
 #include "ECS/ECSManager.h"
 #include "ECS/Components/RenderComponent.h"
 #include "ECS/Components/TransformComponent.h"
@@ -10,6 +12,7 @@ Game::Game()
 
 void Game::run()
 {
+    MaterialManager::Instance()->LoadMaterials();
     InitECS();
     scene = std::make_shared<Scene>();
     scene->Init();

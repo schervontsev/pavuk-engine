@@ -1,5 +1,5 @@
 #include "MaterialManager.h"
-#include "Utils/json.hpp"
+#include "../Utils/json.hpp"
 #include <fstream>
 
 MaterialManager* MaterialManager::_instance(nullptr);
@@ -16,14 +16,14 @@ MaterialManager* MaterialManager::Instance()
 
 void MaterialManager::LoadMaterials()
 {
-    std::ifstream t("resources/materials.json");
-    std::stringstream buffer;
-    buffer << t.rdbuf();
-    json::JSON materialsJson = json::JSON::Load(buffer.str());
+    std::ifstream ifs("resources/materials.json");
+    const std::string content((std::istreambuf_iterator<char>(ifs)),
+        (std::istreambuf_iterator<char>()));
+    json::JSON materialsJson = json::JSON::Load(content);
     for (auto& el : materialsJson.ArrayRange()) {
         Material material;
         material.texturePath = el["path"].ToString();
-
+        AddMaterial(el["id"].ToString(), material);
     }
 }
 
@@ -34,6 +34,11 @@ uint32_t MaterialManager::AddMaterial(const std::string& id, const Material& mat
     materialHandlesById[id] = nextId;
     nextId++;
     return nextId;
+}
+
+uint32_t MaterialManager::GetMaterialHandle(const std::string& id)
+{
+    return materialHandlesById[id];
 }
 
 Material MaterialManager::GetMaterial(uint32_t val)
