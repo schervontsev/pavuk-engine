@@ -6,7 +6,6 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "../Render/Material.h"
 #include "../Render/Vertex.h"
 
 struct MeshPushConstants {

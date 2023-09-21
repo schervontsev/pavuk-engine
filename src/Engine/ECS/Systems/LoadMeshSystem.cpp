@@ -3,7 +3,6 @@
 #include <tiny_obj_loader.h>
 
 #include "../ECSManager.h"
-#include "../../Render/Material.h"
 #include "../../Render/Vertex.h"
 #include "../Components/RenderComponent.h"
 #include "../../ResourceManagers/MaterialManager.h"

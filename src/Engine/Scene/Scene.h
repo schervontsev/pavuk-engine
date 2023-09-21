@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include "../Scene/Mesh.h"
-#include "../Render/Material.h"
 
 class Scene
 {

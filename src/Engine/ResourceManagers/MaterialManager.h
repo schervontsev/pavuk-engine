@@ -1,7 +1,16 @@
 #pragma once
 #include <mutex>
+#include <vulkan/vulkan.hpp>
 
-#include "../Render/Material.h"
+struct Material
+{
+	std::string texturePath;
+
+	vk::Image textureImage;
+	vk::DeviceMemory textureImageMemory;
+	vk::ImageView textureImageView;
+};
+
 class MaterialManager
 {
 private:

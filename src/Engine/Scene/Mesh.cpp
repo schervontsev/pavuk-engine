@@ -1,5 +1,4 @@
 #include "Mesh.h"
-#include "../Render/Material.h"
 #include <glm/gtx/quaternion.hpp>
 
 #define TINYOBJLOADER_IMPLEMENTATION
