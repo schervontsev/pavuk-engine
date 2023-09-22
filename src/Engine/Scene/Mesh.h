@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 #include <vulkan/vulkan.hpp>
 
 #include <glm/glm.hpp>
@@ -12,9 +12,9 @@ struct MeshPushConstants {
 	alignas(16) glm::mat4 transform = glm::mat4(1.f);
 };
 
-struct Mesh
+struct MeshOld
 {
-	Mesh();
+	MeshOld();
 
 	MeshPushConstants pushConstants;
 	glm::mat4 transform = glm::mat4(1.f);
@@ -43,3 +43,4 @@ struct Mesh
 	std::vector<Material> materials;
 };
 
+*/

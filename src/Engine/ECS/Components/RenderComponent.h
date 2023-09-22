@@ -1,16 +1,14 @@
 #pragma once
 #include "../../Scene/Mesh.h"
 
-struct RenderComponent {
-	//TODO: move to resource manager
-	std::string modelPath;
-	std::string modelDir;
-	std::string texturesDir;
+struct MeshPushConstants {
+	alignas(16) glm::mat4 transform = glm::mat4(1.f);
+};
 
+struct RenderComponent {
+	//RenderComponent(const std::string& newMeshName) : meshName(newMeshName) {}
 	MeshPushConstants pushConstants;
 
-	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
-
-	std::vector<uint32_t> materials;
+	std::string meshName;
+	uint32_t meshId;
 };

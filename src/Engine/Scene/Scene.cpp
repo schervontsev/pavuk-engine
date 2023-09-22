@@ -6,29 +6,30 @@
 
 Scene::Scene()
 {
-	Mesh room;
-	room.loadModel(0, "models/viking_room.obj", "models/", "textures/viking_room.png");
-	models.push_back(room);
-	ecsManager.CreateEntity();
-
-	Mesh elf;
-	elf.loadModel(room.materials.size(), "models/elf/Elf01_posed.obj", "models/elf/", "textures/elf/");
-	elf.scale = glm::vec3(0.01f);
-	elf.SetEulerAngle(glm::vec3(glm::radians(90.f), 0.0, 0.0));
-	models.push_back(elf);
 }
 
 void Scene::Init()
 {
-	auto entity = ecsManager.CreateEntity();
-	ecsManager.AddComponent(entity, RenderComponent{});
-	ecsManager.AddComponent(entity, TransformComponent{});
+	auto room = ecsManager.CreateEntity();
+	RenderComponent render;
+	render.meshName = "viking_room";
+	ecsManager.AddComponent(room, render);
+	ecsManager.AddComponent(room, TransformComponent{});
+
+	auto elf = ecsManager.CreateEntity();
+	RenderComponent render1;
+	render1.meshName = "elf";
+	ecsManager.AddComponent(elf, render1);
+	TransformComponent transform;
+	transform.scale = { 0.01f, 0.01f, 0.01f };
+	transform.SetEulerAngle(glm::vec3{glm::radians(90.f), 0.f, 0.f});
+	ecsManager.AddComponent(elf, transform);
 }
 
 void Scene::Update(float dt)
 {
 
-	{
+	/*{
 		//TODO: Debug logic
 		timeFromStart += dt;
 		if (models.empty()) {
@@ -48,5 +49,5 @@ void Scene::Update(float dt)
 	}
 	for (auto& model : models) {
 		model.UpdatePushConstants();
-	}
+	}*/
 }

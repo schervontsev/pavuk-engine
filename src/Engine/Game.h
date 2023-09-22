@@ -3,8 +3,6 @@
 #include "Scene/Scene.h"
 //systems
 #include "ECS/Systems/RenderSystem.h"
-#include "ECS/Systems/LoadMeshSystem.h"
-
 
 class Game
 {
@@ -20,6 +18,5 @@ private:
 
 	//systems
 	std::shared_ptr<RenderSystem> renderSystem;
-	std::shared_ptr<LoadMeshSystem> loadMeshSystem;
 };
 

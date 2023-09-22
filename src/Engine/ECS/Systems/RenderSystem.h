@@ -12,10 +12,11 @@ struct Vertex;
 class RenderSystem : public System
 {
 public:
-	void UpdateTransform(float dt);
+	void UpdateTransform();
 	void UpdateCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout);
-    std::vector<Vertex> GetVertices();
+	void UpdateMeshHandles();
 
+    std::vector<Vertex> GetVertices();
 	std::vector<uint32_t> GetIndices();
 
 };

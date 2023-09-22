@@ -1,15 +1,15 @@
-#include "Mesh.h"
+/*#include "Mesh.h"
 #include <glm/gtx/quaternion.hpp>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #include "../Render/Vertex.h"
 
-Mesh::Mesh()
+MeshOld::MeshOld()
 {
 }
 
-void Mesh::loadModel(int textureCount, const std::string& modelPath, const std::string& modelDir, const std::string& texturePath) {
+void MeshOld::loadModel(int textureCount, const std::string& modelPath, const std::string& modelDir, const std::string& texturePath) {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> modelMaterials;
@@ -150,3 +150,4 @@ void Mesh::UpdatePushConstants()
     pushConstants.transform = transform;
 
 }
+*/

@@ -9,6 +9,8 @@ struct Material
 	vk::Image textureImage;
 	vk::DeviceMemory textureImageMemory;
 	vk::ImageView textureImageView;
+
+	uint32_t gpuNumber = 0;
 };
 
 class MaterialManager

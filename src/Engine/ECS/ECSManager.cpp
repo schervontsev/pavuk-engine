@@ -12,7 +12,7 @@ void ECSManager::Init()
 
 Entity ECSManager::CreateEntity()
 {
-	return Entity();
+	return entityManager->CreateEntity();
 }
 
 void ECSManager::DestroyEntity(Entity entity)

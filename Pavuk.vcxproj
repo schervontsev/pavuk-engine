@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Engine\ECS\Components\TransformComponent.cpp" />
     <ClCompile Include="src\Engine\ResourceManagers\MeshManager.cpp" />
     <ClCompile Include="src\Engine\ResourceManagers\MaterialManager.cpp" />
-    <ClCompile Include="src\Engine\ECS\Systems\LoadMeshSystem.cpp" />
     <ClCompile Include="src\Engine\ECS\ECSManager.cpp" />
     <ClCompile Include="src\Engine\ECS\Systems\RenderSystem.cpp" />
     <ClCompile Include="src\Engine\ECS\ComponentMap.cpp" />
@@ -39,7 +39,6 @@
   <ItemGroup>
     <ClInclude Include="src\Engine\ResourceManagers\MeshManager.h" />
     <ClInclude Include="src\Engine\ResourceManagers\MaterialManager.h" />
-    <ClInclude Include="src\Engine\ECS\Systems\LoadMeshSystem.h" />
     <ClInclude Include="src\Engine\ECS\Components\RenderComponent.h" />
     <ClInclude Include="src\Engine\ECS\ECSManager.h" />
     <ClInclude Include="src\Engine\ECS\Systems\RenderSystem.h" />

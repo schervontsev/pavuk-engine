@@ -2,6 +2,8 @@
 #include <vector>
 #include "../Scene/Mesh.h"
 
+struct Material;
+
 class Scene
 {
 public:
@@ -9,14 +11,11 @@ public:
     void Init();
 
 public:
-    std::vector<Mesh> models;
-    std::vector<Material> materials;
-
     void Update(float dt);
     void SetDirty(bool val) { isDirty = val; };
     bool IsDirty() { return isDirty; };
 
 private:
-    bool isDirty = false;
+    bool isDirty = true;
     double timeFromStart = 0.f;
 };

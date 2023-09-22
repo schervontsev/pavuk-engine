@@ -1,9 +1,10 @@
 #include "Game.h"
 
-#include "MaterialManager.h"
 #include "ECS/ECSManager.h"
 #include "ECS/Components/RenderComponent.h"
 #include "ECS/Components/TransformComponent.h"
+#include "ResourceManagers/MaterialManager.h"
+#include "ResourceManagers/MeshManager.h"
 
 Game::Game()
 {
@@ -12,10 +13,16 @@ Game::Game()
 
 void Game::run()
 {
-    MaterialManager::Instance()->LoadMaterials();
     InitECS();
+
+    MaterialManager::Instance()->LoadMaterials();
+    MeshManager::Instance()->LoadMeshes();
+    
     scene = std::make_shared<Scene>();
     scene->Init();
+
+    renderSystem->UpdateMeshHandles();
+
     renderer->SetScene(scene);
     renderer->SetRenderSystem(renderSystem);
     renderer->init();
@@ -41,7 +48,7 @@ void Game::mainLoop() {
 
         scene->Update(dt); //TODO: will be moved to ecs?
         
-        renderSystem->UpdateTransform(dt);
+        renderSystem->UpdateTransform();
 
         renderer->Update(dt);
         renderer->UpdateBuffers();
@@ -59,14 +66,9 @@ void Game::InitECS()
     ecsManager.RegisterComponent<TransformComponent>();
 
     renderSystem = ecsManager.RegisterSystem<RenderSystem>();
-    loadMeshSystem = ecsManager.RegisterSystem<LoadMeshSystem>();
 
     Signature renderSignature;
     renderSignature.set(ecsManager.GetComponentType<RenderComponent>());
     renderSignature.set(ecsManager.GetComponentType<TransformComponent>());
     ecsManager.SetSystemSignature<RenderSystem>(renderSignature);
-
-    Signature loadMeshSignature;
-    loadMeshSignature.set(ecsManager.GetComponentType<RenderComponent>());
-    ecsManager.SetSystemSignature<LoadMeshSystem>(loadMeshSignature);
 }

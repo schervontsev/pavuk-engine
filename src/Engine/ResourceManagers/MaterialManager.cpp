@@ -1,9 +1,12 @@
 #include "MaterialManager.h"
-#include "../Utils/json.hpp"
+
 #include <fstream>
+#include "../Utils/json.hpp"
 
 MaterialManager* MaterialManager::_instance(nullptr);
 std::mutex MaterialManager::_mutex;
+
+using giri::json::JSON;
 
 MaterialManager* MaterialManager::Instance()
 {
@@ -19,7 +22,7 @@ void MaterialManager::LoadMaterials()
     std::ifstream ifs("resources/materials.json");
     const std::string content((std::istreambuf_iterator<char>(ifs)),
         (std::istreambuf_iterator<char>()));
-    json::JSON materialsJson = json::JSON::Load(content);
+    JSON materialsJson = JSON::Load(content);
     for (auto& el : materialsJson.ArrayRange()) {
         Material material;
         material.texturePath = el["path"].ToString();
@@ -29,8 +32,9 @@ void MaterialManager::LoadMaterials()
 
 uint32_t MaterialManager::AddMaterial(const std::string& id, const Material& material)
 {
-    materials.push_back(material);
     materialsByHandle[nextId] = materials.size();
+    materials.push_back(material);
+    materials.back().gpuNumber = nextId;
     materialHandlesById[id] = nextId;
     nextId++;
     return nextId;

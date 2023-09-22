@@ -10,9 +10,9 @@
 		"id": "elf",
 		"path": "models/elf/Elf01_posed.obj",
 		"materials": [
-			"elf_hair",
 			"elf_face",
 			"elf_body",
+			"elf_hair",
 			"elf_ce"
 		]
 	}
