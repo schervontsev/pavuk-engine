@@ -1,8 +1,9 @@
 #include "Scene.h"
-#include "Mesh.h"
 #include "../ECS/ECSManager.h"
 #include "../ECS/Components/TransformComponent.h"
 #include "../ECS/Components/RenderComponent.h"
+#include "../ECS/Components/RotateComponent.h"
+#include "../ECS/Components/GirlComponent.h"
 
 Scene::Scene()
 {
@@ -24,6 +25,8 @@ void Scene::Init()
 	transform.scale = { 0.01f, 0.01f, 0.01f };
 	transform.SetEulerAngle(glm::vec3{glm::radians(90.f), 0.f, 0.f});
 	ecsManager.AddComponent(elf, transform);
+	ecsManager.AddComponent(elf, RotateComponent{ glm::vec3(0.f, 1.f, 0.f), 2.f });
+	ecsManager.AddComponent(elf, GirlComponent{});
 }
 
 void Scene::Update(float dt)

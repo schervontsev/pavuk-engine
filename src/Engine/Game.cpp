@@ -3,6 +3,8 @@
 #include "ECS/ECSManager.h"
 #include "ECS/Components/RenderComponent.h"
 #include "ECS/Components/TransformComponent.h"
+#include "ECS/Components/GirlComponent.h"
+#include "ECS/Components/RotateComponent.h"
 #include "ResourceManagers/MaterialManager.h"
 #include "ResourceManagers/MeshManager.h"
 
@@ -47,7 +49,7 @@ void Game::mainLoop() {
         startTime = currentTime;
 
         scene->Update(dt); //TODO: will be moved to ecs?
-        
+        testSystem->Update(dt, scene.get());
         renderSystem->UpdateTransform();
 
         renderer->Update(dt);
@@ -62,13 +64,21 @@ void Game::InitECS()
 {
     ecsManager.Init();
 
+    //TODO: use preprocessor to generate
     ecsManager.RegisterComponent<RenderComponent>();
     ecsManager.RegisterComponent<TransformComponent>();
+    ecsManager.RegisterComponent<GirlComponent>();
+    ecsManager.RegisterComponent<RotateComponent>();
 
     renderSystem = ecsManager.RegisterSystem<RenderSystem>();
+    testSystem = ecsManager.RegisterSystem<TestSystem>();
 
     Signature renderSignature;
     renderSignature.set(ecsManager.GetComponentType<RenderComponent>());
     renderSignature.set(ecsManager.GetComponentType<TransformComponent>());
     ecsManager.SetSystemSignature<RenderSystem>(renderSignature);
+
+    Signature testSignature;
+    testSignature.set(ecsManager.GetComponentType<GirlComponent>());
+    ecsManager.SetSystemSignature<TestSystem>(testSignature);
 }

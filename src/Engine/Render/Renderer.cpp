@@ -7,6 +7,15 @@
 #include "../ECS/Systems/RenderSystem.h"
 #include "../ECS/Components/RenderComponent.h"
 
+#include <iostream>
+#include <fstream>
+#include <stdexcept>
+#include <algorithm>
+#include <cstring>
+#include <limits>
+#include <array>
+#include <set>
+
 void Renderer::init() {
     initWindow();
     initVulkan();

@@ -3,6 +3,7 @@
 #include "Scene/Scene.h"
 //systems
 #include "ECS/Systems/RenderSystem.h"
+#include "ECS/Systems/TestSystem.h"
 
 class Game
 {
@@ -18,5 +19,6 @@ private:
 
 	//systems
 	std::shared_ptr<RenderSystem> renderSystem;
+	std::shared_ptr<TestSystem> testSystem;
 };
 

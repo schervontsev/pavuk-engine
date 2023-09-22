@@ -1,5 +1,4 @@
 #pragma once
-#include "../../Scene/Mesh.h"
 
 struct MeshPushConstants {
 	alignas(16) glm::mat4 transform = glm::mat4(1.f);
@@ -11,4 +10,6 @@ struct RenderComponent {
 
 	std::string meshName;
 	uint32_t meshId;
+
+	bool isVisible = true;
 };
