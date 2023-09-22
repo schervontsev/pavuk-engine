@@ -1,11 +1,15 @@
 #include "Renderer.h"
+
 #include "../ResourceManagers/MaterialManager.h"
 #include "../ResourceManagers/MeshManager.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
 #include "../ECS/Systems/RenderSystem.h"
 #include "../ECS/Components/RenderComponent.h"
+
+#include "UniformBufferObject.h"
 
 #include <iostream>
 #include <fstream>

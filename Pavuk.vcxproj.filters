@@ -128,5 +128,8 @@
     <ClInclude Include="src\Engine\ECS\Components\GirlComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Render\UniformBufferObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
