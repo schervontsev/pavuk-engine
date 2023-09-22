@@ -70,10 +70,8 @@ void Renderer::UpdateBuffers()
         assert(renderSystem);
         return;
     }
-    auto vertices = renderSystem->GetVertices();
-    auto indices = renderSystem->GetIndices();
-    createVertexBuffer(vertices);
-    createIndexBuffer(indices);
+    createVertexBuffer(renderSystem->GetVertices());
+    createIndexBuffer(renderSystem->GetIndices());
     if (scene) {
         scene->SetDirty(false);
     }

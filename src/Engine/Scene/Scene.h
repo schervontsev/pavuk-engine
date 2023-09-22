@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include "../Scene/Mesh.h"
 
 struct Material;
 
