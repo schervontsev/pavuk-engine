@@ -24,7 +24,7 @@ class RenderSystem;
 const int WIDTH = 1280;
 const int HEIGHT = 720;
 
-const int MAX_FRAMES_IN_FLIGHT = 2;
+const int MAX_FRAMES_IN_FLIGHT = 30;
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"//,"VK_LAYER_LUNARG_api_dump"

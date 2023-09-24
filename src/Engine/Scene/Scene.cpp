@@ -4,6 +4,7 @@
 #include "../ECS/Components/RenderComponent.h"
 #include "../ECS/Components/RotateComponent.h"
 #include "../ECS/Components/GirlComponent.h"
+#include "../ECS/Components/CameraComponent.h"
 
 Scene::Scene()
 {
@@ -16,17 +17,33 @@ void Scene::Init()
 	render.meshName = "viking_room";
 	ecsManager.AddComponent(room, render);
 	ecsManager.AddComponent(room, TransformComponent{});
+	
+	const int girlNum = 5000;
+	for (int i = 0; i < girlNum; i++) {
+		auto elf = ecsManager.CreateEntity();
+		RenderComponent render1;
+		render1.meshName = "elf";
+		ecsManager.AddComponent(elf, render1);
+		TransformComponent transform;
+		transform.scale = { 0.01f, 0.01f, 0.01f };
+		//transform.translation = { 0.f, 50.f * (i - 0.5f * girlNum), 0.f};
+		transform.translation = { std::rand() % 1000 - 500, std::rand() % 1000 - 500, std::rand() % 1000 - 500 };
+		transform.SetEulerAngle(glm::vec3{ glm::radians(90.f), 0.f, 0.f });
+		ecsManager.AddComponent(elf, transform);
+		ecsManager.AddComponent(elf, RotateComponent{ glm::vec3(0.f, 1.f, 0.f), 2.f });
+		ecsManager.AddComponent(elf, GirlComponent{});
+	}
 
-	auto elf = ecsManager.CreateEntity();
-	RenderComponent render1;
-	render1.meshName = "elf";
-	ecsManager.AddComponent(elf, render1);
-	TransformComponent transform;
-	transform.scale = { 0.01f, 0.01f, 0.01f };
-	transform.SetEulerAngle(glm::vec3{glm::radians(90.f), 0.f, 0.f});
-	ecsManager.AddComponent(elf, transform);
-	ecsManager.AddComponent(elf, RotateComponent{ glm::vec3(0.f, 1.f, 0.f), 2.f });
-	ecsManager.AddComponent(elf, GirlComponent{});
+	InitCamera();
+}
+
+void Scene::InitCamera() {
+	mainCamera = ecsManager.CreateEntity();
+	ecsManager.AddComponent(mainCamera, CameraComponent{glm::radians(45.f)});
+	ecsManager.AddComponent(mainCamera, TransformComponent{});
+
+	//TODO: test
+	ecsManager.AddComponent(mainCamera, RotateComponent{ glm::vec3(0.f, 0.f, 1.f), 2.f });
 }
 
 void Scene::Update(float dt)

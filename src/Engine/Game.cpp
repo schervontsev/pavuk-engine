@@ -5,6 +5,7 @@
 #include "ECS/Components/TransformComponent.h"
 #include "ECS/Components/GirlComponent.h"
 #include "ECS/Components/RotateComponent.h"
+#include "ECS/Components/CameraComponent.h"
 #include "ResourceManagers/MaterialManager.h"
 #include "ResourceManagers/MeshManager.h"
 
@@ -49,7 +50,12 @@ void Game::mainLoop() {
         startTime = currentTime;
 
         scene->Update(dt); //TODO: will be moved to ecs?
+
+        //TODO: some testing
+        rotateSystem->Update(dt);
         testSystem->Update(dt, scene.get());
+
+        updateTransformSystem->UpdateTransform();
         renderSystem->UpdateTransform();
 
         renderer->Update(dt);
@@ -69,14 +75,26 @@ void Game::InitECS()
     ecsManager.RegisterComponent<TransformComponent>();
     ecsManager.RegisterComponent<GirlComponent>();
     ecsManager.RegisterComponent<RotateComponent>();
+    ecsManager.RegisterComponent<CameraComponent>();
 
     renderSystem = ecsManager.RegisterSystem<RenderSystem>();
+    updateTransformSystem = ecsManager.RegisterSystem<UpdateTransformSystem>();
+    rotateSystem = ecsManager.RegisterSystem<RotateSystem>();
     testSystem = ecsManager.RegisterSystem<TestSystem>();
 
     Signature renderSignature;
     renderSignature.set(ecsManager.GetComponentType<RenderComponent>());
     renderSignature.set(ecsManager.GetComponentType<TransformComponent>());
     ecsManager.SetSystemSignature<RenderSystem>(renderSignature);
+
+    Signature transformSignature;
+    transformSignature.set(ecsManager.GetComponentType<TransformComponent>());
+    ecsManager.SetSystemSignature<UpdateTransformSystem>(transformSignature);
+
+    Signature rotateSignature;
+    rotateSignature.set(ecsManager.GetComponentType<TransformComponent>());
+    rotateSignature.set(ecsManager.GetComponentType<RotateComponent>());
+    ecsManager.SetSystemSignature<RotateSystem>(rotateSignature);
 
     Signature testSignature;
     testSignature.set(ecsManager.GetComponentType<GirlComponent>());

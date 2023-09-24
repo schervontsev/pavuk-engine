@@ -3,7 +3,9 @@
 #include "Scene/Scene.h"
 //systems
 #include "ECS/Systems/RenderSystem.h"
+#include "ECS/Systems/UpdateTransformSystem.h"
 #include "ECS/Systems/TestSystem.h"
+#include "ECS/Systems/RotateSystem.h"
 
 class Game
 {
@@ -19,6 +21,8 @@ private:
 
 	//systems
 	std::shared_ptr<RenderSystem> renderSystem;
+	std::shared_ptr<UpdateTransformSystem> updateTransformSystem;
+	std::shared_ptr<RotateSystem> rotateSystem;
 	std::shared_ptr<TestSystem> testSystem;
 };
 

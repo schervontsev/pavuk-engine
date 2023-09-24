@@ -6,6 +6,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include "../ECS/ECSManager.h"
 #include "../ECS/Systems/RenderSystem.h"
 #include "../ECS/Components/RenderComponent.h"
 
@@ -19,6 +20,8 @@
 #include <limits>
 #include <array>
 #include <set>
+#include "../ECS/Components/TransformComponent.h"
+#include "../ECS/Components/CameraComponent.h"
 
 void Renderer::init() {
     initWindow();
@@ -1158,10 +1161,12 @@ void Renderer::updateUniformBuffer(uint32_t currentImage) {
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     std::vector<glm::mat4> modelMatrices;
+    auto transformComponent = ecsManager.GetComponent<TransformComponent>(scene->GetMainCamera());
+    auto cameraComponent = ecsManager.GetComponent<CameraComponent>(scene->GetMainCamera());
     UniformBufferObject camera {};
-    camera.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(10.f), glm::vec3(0.0f, 0.0f, 1.0f));
+    camera.model = transformComponent.transform;
     camera.view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    camera.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+    camera.proj = glm::perspective(cameraComponent.fov, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
     camera.proj[1][1] *= -1;
 
     vk::DeviceSize bufferSize = sizeof(camera);
