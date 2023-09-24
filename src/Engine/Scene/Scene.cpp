@@ -18,16 +18,16 @@ void Scene::Init()
 	ecsManager.AddComponent(room, render);
 	ecsManager.AddComponent(room, TransformComponent{});
 	
-	const int girlNum = 5000;
+	const int girlNum = 1;
 	for (int i = 0; i < girlNum; i++) {
 		auto elf = ecsManager.CreateEntity();
 		RenderComponent render1;
 		render1.meshName = "elf";
+		render1.instances = 20000;
 		ecsManager.AddComponent(elf, render1);
 		TransformComponent transform;
 		transform.scale = { 0.01f, 0.01f, 0.01f };
-		//transform.translation = { 0.f, 50.f * (i - 0.5f * girlNum), 0.f};
-		transform.translation = { std::rand() % 1000 - 500, std::rand() % 1000 - 500, std::rand() % 1000 - 500 };
+		transform.translation = { std::rand() % 100 - 50, std::rand() % 100 - 50, std::rand() % 100 - 50 };
 		transform.SetEulerAngle(glm::vec3{ glm::radians(90.f), 0.f, 0.f });
 		ecsManager.AddComponent(elf, transform);
 		ecsManager.AddComponent(elf, RotateComponent{ glm::vec3(0.f, 1.f, 0.f), 2.f });

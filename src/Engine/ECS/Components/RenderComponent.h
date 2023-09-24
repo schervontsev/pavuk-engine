@@ -12,4 +12,6 @@ struct RenderComponent {
 	uint32_t meshId;
 
 	bool isVisible = true;
+
+	uint32_t instances = 1;
 };

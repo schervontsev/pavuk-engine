@@ -29,7 +29,7 @@ void RenderSystem::UpdateCommandBuffer(vk::CommandBuffer commandBuffer, vk::Pipe
 			auto mesh = MeshManager::Instance()->GetMesh(render.meshId);
 			//upload the matrix to the GPU via push constants
 			commandBuffer.pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(MeshPushConstants), &render.pushConstants);
-			commandBuffer.drawIndexed((uint32_t)mesh->indices.size(), 1, indicesSize, verticesSize, 0);
+			commandBuffer.drawIndexed((uint32_t)mesh->indices.size(), render.instances, indicesSize, verticesSize, 0);
 			indicesSize += mesh->indices.size();
 			verticesSize += (uint32_t)mesh->vertices.size();
 		}
