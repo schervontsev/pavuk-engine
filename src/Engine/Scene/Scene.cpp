@@ -23,7 +23,7 @@ void Scene::Init()
 		auto elf = ecsManager.CreateEntity();
 		RenderComponent render1;
 		render1.meshName = "elf";
-		render1.instances = 20000;
+		render1.instances = 1;
 		ecsManager.AddComponent(elf, render1);
 		TransformComponent transform;
 		transform.scale = { 0.01f, 0.01f, 0.01f };
