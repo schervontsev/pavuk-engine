@@ -12,6 +12,7 @@
 Game::Game()
 {
     renderer = std::make_unique<Renderer>();
+    inputManager = std::make_unique<InputManager>();
 }
 
 void Game::run()
@@ -28,7 +29,10 @@ void Game::run()
 
     renderer->SetScene(scene);
     renderer->SetRenderSystem(renderSystem);
-    renderer->init();
+
+	inputManager->Init(renderer->initWindow());
+
+	renderer->initVulkan();
     renderer->UpdateBuffers();
     mainLoop();
     cleanup();
@@ -44,7 +48,6 @@ void Game::mainLoop() {
     glm::mat4 sceneMatrix = glm::mat4(1.f);
     while (!renderer->WindowShouldClose()) {
         glfwPollEvents();
-
         auto currentTime = std::chrono::high_resolution_clock::now();
         float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
         startTime = currentTime;

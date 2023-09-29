@@ -24,7 +24,7 @@ class RenderSystem;
 const int WIDTH = 1280;
 const int HEIGHT = 720;
 
-const int MAX_FRAMES_IN_FLIGHT = 30;
+const int MAX_FRAMES_IN_FLIGHT = 2;
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"//,"VK_LAYER_LUNARG_api_dump"
@@ -57,7 +57,9 @@ struct SwapChainSupportDetails {
 
 class Renderer {
 public:
-    void init();
+    GLFWwindow* initWindow();
+    void initVulkan();
+
     void cleanup();
 
     void drawFrame();
@@ -73,7 +75,7 @@ public:
 
 private:
     std::shared_ptr<RenderSystem> renderSystem;
-    GLFWwindow* window;
+    std::shared_ptr<GLFWwindow> window;
     std::shared_ptr<Scene> scene;
 
     vk::UniqueInstance instance;
@@ -128,16 +130,11 @@ private:
 
     bool framebufferResized = false;
 
-
-    void initWindow();
-
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
         auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
     }
 
-
-    void initVulkan();
     void cleanupSwapChain();
     void recreateSwapChain();
     void createInstance();

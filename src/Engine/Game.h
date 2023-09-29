@@ -6,6 +6,7 @@
 #include "ECS/Systems/UpdateTransformSystem.h"
 #include "ECS/Systems/TestSystem.h"
 #include "ECS/Systems/RotateSystem.h"
+#include "Input/InputManager.h"
 
 class Game
 {
@@ -17,6 +18,7 @@ public:
 	void InitECS();
 private:
 	std::unique_ptr<Renderer> renderer;
+	std::unique_ptr<InputManager> inputManager;
 	std::shared_ptr<Scene> scene;
 
 	//systems

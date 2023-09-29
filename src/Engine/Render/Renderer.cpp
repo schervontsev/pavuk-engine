@@ -23,19 +23,16 @@
 #include "../ECS/Components/TransformComponent.h"
 #include "../ECS/Components/CameraComponent.h"
 
-void Renderer::init() {
-    initWindow();
-    initVulkan();
-}
-
-void Renderer::initWindow() {
+GLFWwindow* Renderer::initWindow() {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-    glfwSetWindowUserPointer(window, this);
-    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    window = std::shared_ptr<GLFWwindow>(glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr), [](GLFWwindow* window) {
+        glfwDestroyWindow(window);
+    });
+    glfwSetWindowUserPointer(window.get(), this);
+    glfwSetFramebufferSizeCallback(window.get(), framebufferResizeCallback);
+    return window.get();
 }
 
 void Renderer::SetScene(const std::shared_ptr<Scene>& newScene)
@@ -132,16 +129,16 @@ void Renderer::cleanup() {
         DestroyDebugUtilsMessengerEXT(*instance, callback, nullptr);
     }
 
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(window.get());
 
     glfwTerminate();
 }
 
 void Renderer::recreateSwapChain() {
     int width = 0, height = 0;
-    glfwGetFramebufferSize(window, &width, &height);
+    glfwGetFramebufferSize(window.get(), &width, &height);
     while (width == 0 || height == 0) {
-        glfwGetFramebufferSize(window, &width, &height);
+        glfwGetFramebufferSize(window.get(), &width, &height);
         glfwWaitEvents();
     }
 
@@ -222,7 +219,7 @@ void Renderer::setupDebugMessenger() {
 
 void Renderer::createSurface() {
     VkSurfaceKHR rawSurface;
-    if (glfwCreateWindowSurface(*instance, window, nullptr, &rawSurface) != VK_SUCCESS) {
+    if (glfwCreateWindowSurface(*instance, window.get(), nullptr, &rawSurface) != VK_SUCCESS) {
         throw std::runtime_error("failed to create window surface!");
     }
 
@@ -1252,7 +1249,7 @@ void Renderer::drawFrame() {
 
 bool Renderer::WindowShouldClose()
 {
-    return glfwWindowShouldClose(window);
+    return glfwWindowShouldClose(window.get());
 }
 
 void Renderer::WaitDevice()
@@ -1305,7 +1302,7 @@ vk::Extent2D Renderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabi
         return capabilities.currentExtent;
     } else {
         int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
+        glfwGetFramebufferSize(window.get(), &width, &height);
 
         vk::Extent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 
