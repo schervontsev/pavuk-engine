@@ -1,14 +1,32 @@
 #pragma once
+#include <map>
 #include <memory>
 #include <GLFW/glfw3.h>
 
-class InputManager
+namespace Input
 {
-public:
-	void Init(GLFWwindow* newWindow);
+	
+	enum class Action
+	{
+		StepForward,
+		StepBackward
+	};
 
-	static void keyCallback(GLFWwindow*, int, int, int);
-private:
-	GLFWwindow* window = nullptr; //weak_ptr or shared_ptr isn't really needed here
-};
+	enum class Axis
+	{
+		
+	};
 
+	class InputManager
+	{
+	public:
+		void Init(GLFWwindow* newWindow);
+
+		static void keyCallback(GLFWwindow*, int, int, int, int);
+	private:
+		GLFWwindow* window = nullptr; //smart pointer isn't really needed here
+
+		static std::map<int, Action> keyBinds;
+	};
+
+}
