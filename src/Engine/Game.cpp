@@ -6,13 +6,14 @@
 #include "ECS/Components/GirlComponent.h"
 #include "ECS/Components/RotateComponent.h"
 #include "ECS/Components/CameraComponent.h"
+#include "ECS/Components/InputComponent.h"
 #include "ResourceManagers/MaterialManager.h"
 #include "ResourceManagers/MeshManager.h"
+#include "Input/InputManager.h"
 
 Game::Game()
 {
     renderer = std::make_unique<Renderer>();
-    inputManager = std::make_unique<InputManager>();
 }
 
 void Game::run()
@@ -30,7 +31,7 @@ void Game::run()
     renderer->SetScene(scene);
     renderer->SetRenderSystem(renderSystem);
 
-	inputManager->Init(renderer->initWindow());
+	InputManager::Instance()->Init(renderer->initWindow());
 
 	renderer->initVulkan();
     renderer->UpdateBuffers();
@@ -53,6 +54,8 @@ void Game::mainLoop() {
         startTime = currentTime;
 
         scene->Update(dt); //TODO: will be moved to ecs?
+
+        setInputSystem->SetInput();
 
         //TODO: some testing
         rotateSystem->Update(dt);
@@ -79,11 +82,13 @@ void Game::InitECS()
     ecsManager.RegisterComponent<GirlComponent>();
     ecsManager.RegisterComponent<RotateComponent>();
     ecsManager.RegisterComponent<CameraComponent>();
+    ecsManager.RegisterComponent<InputManager>();
 
     renderSystem = ecsManager.RegisterSystem<RenderSystem>();
     updateTransformSystem = ecsManager.RegisterSystem<UpdateTransformSystem>();
     rotateSystem = ecsManager.RegisterSystem<RotateSystem>();
     testSystem = ecsManager.RegisterSystem<TestSystem>();
+    setInputSystem = ecsManager.RegisterSystem<SetInputSystem>();
 
     Signature renderSignature;
     renderSignature.set(ecsManager.GetComponentType<RenderComponent>());
@@ -102,4 +107,8 @@ void Game::InitECS()
     Signature testSignature;
     testSignature.set(ecsManager.GetComponentType<GirlComponent>());
     ecsManager.SetSystemSignature<TestSystem>(testSignature);
+
+    Signature inputSignature;
+    inputSignature.set(ecsManager.GetComponentType<InputComponent>());
+    ecsManager.SetSystemSignature<SetInputSystem>(inputSignature);
 }

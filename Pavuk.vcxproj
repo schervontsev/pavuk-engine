@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Engine\ECS\Systems\CameraControllerSystem.cpp" />
+    <ClCompile Include="src\Engine\ECS\Systems\SetInputSystem.cpp" />
     <ClCompile Include="src\Engine\Input\InputManager.cpp" />
     <ClCompile Include="src\Engine\ECS\Systems\RotateSystem.cpp" />
     <ClCompile Include="src\Engine\ECS\Components\TransformComponent.cpp" />
@@ -41,6 +43,9 @@
     <ClCompile Include="src\Engine\ECS\Systems\TestSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Engine\ECS\Systems\CameraControllerSystem.h" />
+    <ClInclude Include="src\Engine\ECS\Systems\SetInputSystem.h" />
+    <ClInclude Include="src\Engine\ECS\Components\InputComponent.h" />
     <ClInclude Include="src\Engine\Input\InputManager.h" />
     <ClInclude Include="src\Engine\ECS\Systems\RotateSystem.h" />
     <ClInclude Include="src\Engine\ECS\Components\CameraComponent.h" />
