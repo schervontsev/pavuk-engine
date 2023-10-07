@@ -16,6 +16,11 @@ InputManager* InputManager::Instance()
 	return _instance;
 }
 
+void InputManager::ClearInput()
+{
+	inputBitmask.reset();
+}
+
 void InputManager::Init(GLFWwindow* newWindow)
 {
 	assert(newWindow);
@@ -29,11 +34,11 @@ void InputManager::Init(GLFWwindow* newWindow)
 
 }
 
-void InputManager::keyCallback(GLFWwindow*, int key, int, int, int)
+void InputManager::keyCallback(GLFWwindow*, int key, int scancode, int action, int mods)
 {
 	const auto foundAction = Instance()->keyBinds.find(key);
 	if (foundAction != Instance()->keyBinds.end()) {
-		Instance()->inputBitmask.set(static_cast<int>(foundAction->second));
+		Instance()->inputBitmask.set(static_cast<int>(foundAction->second), action != GLFW_RELEASE);
 		//Instance()->currentInputs.push_back(foundAction->second);
 	}
 	std::cout << "key pressed: " + std::to_string(key);

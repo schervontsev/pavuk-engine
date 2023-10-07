@@ -9,4 +9,6 @@ void SetInputSystem::SetInput()
 		auto& input = ecsManager.GetComponent<InputComponent>(entity);
 		input.currentInput = InputManager::Instance()->GetInputBitmask();
 	}
+
+	//InputManager::Instance()->ClearInput();
 }

@@ -57,6 +57,8 @@ void Game::mainLoop() {
 
         setInputSystem->SetInput();
 
+        cameraControllerSystem->Update(dt);
+
         //TODO: some testing
         rotateSystem->Update(dt);
         testSystem->Update(dt, scene.get());
@@ -82,13 +84,14 @@ void Game::InitECS()
     ecsManager.RegisterComponent<GirlComponent>();
     ecsManager.RegisterComponent<RotateComponent>();
     ecsManager.RegisterComponent<CameraComponent>();
-    ecsManager.RegisterComponent<InputManager>();
+    ecsManager.RegisterComponent<InputComponent>();
 
     renderSystem = ecsManager.RegisterSystem<RenderSystem>();
     updateTransformSystem = ecsManager.RegisterSystem<UpdateTransformSystem>();
     rotateSystem = ecsManager.RegisterSystem<RotateSystem>();
     testSystem = ecsManager.RegisterSystem<TestSystem>();
     setInputSystem = ecsManager.RegisterSystem<SetInputSystem>();
+    cameraControllerSystem = ecsManager.RegisterSystem<CameraControllerSystem>();
 
     Signature renderSignature;
     renderSignature.set(ecsManager.GetComponentType<RenderComponent>());
@@ -111,4 +114,10 @@ void Game::InitECS()
     Signature inputSignature;
     inputSignature.set(ecsManager.GetComponentType<InputComponent>());
     ecsManager.SetSystemSignature<SetInputSystem>(inputSignature);
+
+    Signature cameraControllerSignature;
+    cameraControllerSignature.set(ecsManager.GetComponentType<InputComponent>());
+    cameraControllerSignature.set(ecsManager.GetComponentType<CameraComponent>());
+    cameraControllerSignature.set(ecsManager.GetComponentType<TransformComponent>());
+    ecsManager.SetSystemSignature<CameraControllerSystem>(cameraControllerSignature);
 }

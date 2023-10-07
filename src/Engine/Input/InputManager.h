@@ -38,6 +38,7 @@ public:
 	static InputManager* Instance();
 
 	void Init(GLFWwindow* newWindow);
+	void ClearInput();
 
 	static void keyCallback(GLFWwindow*, int, int, int, int);
 	

@@ -1162,7 +1162,7 @@ void Renderer::updateUniformBuffer(uint32_t currentImage) {
     auto cameraComponent = ecsManager.GetComponent<CameraComponent>(scene->GetMainCamera());
     UniformBufferObject camera {};
     camera.model = transformComponent.transform;
-    camera.view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    camera.view = glm::lookAt(transformComponent.translation, transformComponent.translation + transformComponent.GetForwardVector(), glm::vec3(0.0f, 1.0f, 0.0f));
     camera.proj = glm::perspective(cameraComponent.fov, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
     camera.proj[1][1] *= -1;
 

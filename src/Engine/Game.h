@@ -27,6 +27,6 @@ private:
 	std::shared_ptr<RotateSystem> rotateSystem;
 	std::shared_ptr<TestSystem> testSystem;
 	std::shared_ptr<SetInputSystem> setInputSystem;
-	std::shared_ptr<CameraControllerSystem> setInputSystem;
+	std::shared_ptr<CameraControllerSystem> cameraControllerSystem;
 };
 

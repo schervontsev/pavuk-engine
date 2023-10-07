@@ -14,5 +14,6 @@ struct TransformComponent
 
 	void SetEulerAngle(glm::vec3 euler);
 	void AddEulerAngle(glm::vec3 euler);
+	glm::vec3 GetForwardVector();
 };
 

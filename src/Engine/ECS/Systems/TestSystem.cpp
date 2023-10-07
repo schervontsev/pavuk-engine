@@ -16,10 +16,7 @@ void TestSystem::Update(float dt, Scene* scene)
 		auto& transform = ecsManager.GetComponent<TransformComponent>(entity);
 		auto& girl = ecsManager.GetComponent<GirlComponent>(entity);
 		auto& render = ecsManager.GetComponent<RenderComponent>(entity);
-		auto& input = ecsManager.GetComponent<InputComponent>(entity);
 
-		if (input.inputs.)
-		transform.translation
 		girl.timer += dt;
 		const bool wasVisible = render.isVisible;
 		if (render.isVisible && girl.timer > girl.hideTimer && girl.timer < girl.showTimer) {
