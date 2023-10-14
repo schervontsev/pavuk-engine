@@ -163,7 +163,7 @@ void Renderer::createInstance() {
         VK_MAKE_VERSION(1, 0, 0),
         "No Engine",
         VK_MAKE_VERSION(1, 0, 0),
-        VK_API_VERSION_1_0
+        VK_API_VERSION_1_1
     );
 
     auto extensions = getRequiredExtensions();
@@ -484,23 +484,9 @@ void Renderer::createGraphicsPipeline() {
     inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-    vk::Viewport viewport = {};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float) swapChainExtent.width;
-    viewport.height = (float) swapChainExtent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    vk::Rect2D scissor = {};
-    scissor.offset = vk::Offset2D(0, 0);
-    scissor.extent = swapChainExtent;
-
     vk::PipelineViewportStateCreateInfo viewportState = {};
     viewportState.viewportCount = 1;
-    viewportState.pViewports = &viewport;
     viewportState.scissorCount = 1;
-    viewportState.pScissors = &scissor;
 
     vk::PipelineRasterizationStateCreateInfo rasterizer = {};
     rasterizer.depthClampEnable = VK_FALSE;
@@ -1102,13 +1088,13 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
 
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
 
-    vk::Viewport viewport {};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float) swapChainExtent.width;
-    viewport.height = (float) swapChainExtent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+    vk::Viewport viewport{};
+    viewport.x = 0.f;
+    viewport.y = 0.f;
+    viewport.width = (float)swapChainExtent.width;
+    viewport.height = (float)swapChainExtent.height;
+    viewport.minDepth = 0.f;
+    viewport.maxDepth = 1.f;
     commandBuffer.setViewport(0, 1, &viewport);
 
     vk::Rect2D scissor {};
@@ -1161,10 +1147,17 @@ void Renderer::updateUniformBuffer(uint32_t currentImage) {
     auto transformComponent = ecsManager.GetComponent<TransformComponent>(scene->GetMainCamera());
     auto cameraComponent = ecsManager.GetComponent<CameraComponent>(scene->GetMainCamera());
     UniformBufferObject camera {};
-    camera.model = transformComponent.transform;
-    camera.view = glm::lookAt(transformComponent.translation, transformComponent.translation + transformComponent.GetForwardVector(), glm::vec3(0.0f, 1.0f, 0.0f));
-    camera.proj = glm::perspective(cameraComponent.fov, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
-    camera.proj[1][1] *= -1;
+    auto tr = transformComponent.translation;
+    tr.y = -tr.y;
+
+    glm::mat4 openGlToVulkan = { 1, 0, 0 ,0,
+                 0, -1, 0, 0,
+                 0, 0, -1, 0,
+                 0, 0, 0, 1 };
+
+    auto view = glm::lookAt(tr, tr + transformComponent.GetForwardVector(), glm::vec3(0.0f, 1.0f, 0.0f)) * openGlToVulkan;
+    auto proj = glm::perspective(cameraComponent.fov, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+    camera.view_proj = proj * view;
 
     vk::DeviceSize bufferSize = sizeof(camera);
 
@@ -1385,6 +1378,7 @@ std::vector<const char*> Renderer::getRequiredExtensions() {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
     //extensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+    //extensions.push_back(VK_KHR_Maintenance1);
 
 
     return extensions;

@@ -6,7 +6,7 @@
 #include <vector>
 #include <GLFW/glfw3.h>
 
-#define MAX_INPUTS 4
+#define MAX_INPUTS 16
 
 namespace Input
 {
@@ -14,7 +14,11 @@ namespace Input
 	enum class Action
 	{
 		StepForward,
-		StepBackward
+		StepBackward,
+		RotateLeft,
+		RotateRight,
+		Ascend,
+		Descend,
 	};
 
 	enum class Axis

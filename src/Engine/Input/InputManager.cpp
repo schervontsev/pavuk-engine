@@ -29,6 +29,10 @@ void InputManager::Init(GLFWwindow* newWindow)
 	//TODO: unhardcode bindings
 	keyBinds[GLFW_KEY_W] = Input::Action::StepForward;
 	keyBinds[GLFW_KEY_S] = Input::Action::StepBackward;
+	keyBinds[GLFW_KEY_LEFT] = Input::Action::RotateLeft;
+	keyBinds[GLFW_KEY_RIGHT] = Input::Action::RotateRight;
+	keyBinds[GLFW_KEY_E] = Input::Action::Ascend;
+	keyBinds[GLFW_KEY_Q] = Input::Action::Descend;
 
 	glfwSetKeyCallback(newWindow, GLFWkeyfun(keyCallback));
 

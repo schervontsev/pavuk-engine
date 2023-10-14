@@ -16,8 +16,21 @@ void CameraControllerSystem::Update(float dt)
 
 		if (input.currentInput.test((int)Input::Action::StepForward)) {
 			transform.translation += forward * dt * 1.f;
-		}else if (input.currentInput.test((int)Input::Action::StepBackward)) {
+		}
+		if (input.currentInput.test((int)Input::Action::StepBackward)) {
 			transform.translation -= forward * dt * 1.f;
+		}
+		if (input.currentInput.test((int)Input::Action::RotateLeft)) {
+			transform.AddEulerAngle(-glm::vec3(0.f, -1.f, 0.f) * dt * 1.f);
+		}
+		if (input.currentInput.test((int)Input::Action::RotateRight)) {
+			transform.AddEulerAngle(glm::vec3(0.f, -1.f, 0.f) * dt * 1.f);
+		}
+		if (input.currentInput.test((int)Input::Action::Ascend)) {
+			transform.translation += glm::vec3(0.f, 1.f, 0.f) * dt * 1.f;
+		}
+		if (input.currentInput.test((int)Input::Action::Descend)) {
+			transform.translation += glm::vec3(0.f, -1.f, 0.f) * dt * 1.f;
 		}
 	}
 

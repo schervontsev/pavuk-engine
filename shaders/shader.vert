@@ -1,9 +1,7 @@
 #version 450
 
 layout(binding = 0) uniform UniformBufferObject {
-    mat4 model;
-    mat4 view;
-    mat4 proj;
+    mat4 view_proj;
 } ubo;
 
 //push constants block
@@ -22,7 +20,7 @@ layout(location = 1) out vec2 fragTexCoord;
 layout(location = 2) out int textureIndex;
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model * PushConstants.transform * vec4(inPosition, 1.0) + gl_InstanceIndex;
+    gl_Position = ubo.view_proj * PushConstants.transform * vec4(inPosition, 1.0);// + gl_InstanceIndex;
     fragColor = inColor;
     fragTexCoord = inTexCoord;
     textureIndex = inTextureIndex;
