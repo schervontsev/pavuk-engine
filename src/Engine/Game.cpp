@@ -57,7 +57,7 @@ void Game::mainLoop() {
 
         setInputSystem->SetInput();
 
-        cameraControllerSystem->Update(dt);
+        simpleControllerSystem->Update(dt);
 
         //TODO: some testing
         rotateSystem->Update(dt);
@@ -91,7 +91,7 @@ void Game::InitECS()
     rotateSystem = ecsManager.RegisterSystem<RotateSystem>();
     testSystem = ecsManager.RegisterSystem<TestSystem>();
     setInputSystem = ecsManager.RegisterSystem<SetInputSystem>();
-    cameraControllerSystem = ecsManager.RegisterSystem<CameraControllerSystem>();
+    simpleControllerSystem = ecsManager.RegisterSystem<SimpleControllerSystem>();
 
     Signature renderSignature;
     renderSignature.set(ecsManager.GetComponentType<RenderComponent>());
@@ -117,7 +117,6 @@ void Game::InitECS()
 
     Signature cameraControllerSignature;
     cameraControllerSignature.set(ecsManager.GetComponentType<InputComponent>());
-    cameraControllerSignature.set(ecsManager.GetComponentType<CameraComponent>());
     cameraControllerSignature.set(ecsManager.GetComponentType<TransformComponent>());
-    ecsManager.SetSystemSignature<CameraControllerSystem>(cameraControllerSignature);
+    ecsManager.SetSystemSignature<SimpleControllerSystem>(cameraControllerSignature);
 }

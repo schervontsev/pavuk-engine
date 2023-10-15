@@ -1,7 +1,7 @@
 #pragma once
 #include "System.h"
 
-class CameraControllerSystem :
+class SimpleControllerSystem :
     public System
 {
 public:

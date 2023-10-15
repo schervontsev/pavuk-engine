@@ -2,7 +2,7 @@
 #include "Render/Renderer.h"
 #include "Scene/Scene.h"
 //systems
-#include "ECS/Systems/CameraControllerSystem.h"
+#include "ECS/Systems/SimpleControllerSystem.h"
 #include "ECS/Systems/RenderSystem.h"
 #include "ECS/Systems/UpdateTransformSystem.h"
 #include "ECS/Systems/TestSystem.h"
@@ -27,6 +27,6 @@ private:
 	std::shared_ptr<RotateSystem> rotateSystem;
 	std::shared_ptr<TestSystem> testSystem;
 	std::shared_ptr<SetInputSystem> setInputSystem;
-	std::shared_ptr<CameraControllerSystem> cameraControllerSystem;
+	std::shared_ptr<SimpleControllerSystem> simpleControllerSystem;
 };
 

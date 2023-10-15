@@ -1,9 +1,9 @@
-#include "CameraControllerSystem.h"
+#include "SimpleControllerSystem.h"
 #include "../Components/TransformComponent.h"
 #include "../Components/InputComponent.h"
 #include "../ECSManager.h"
 
-void CameraControllerSystem::Update(float dt)
+void SimpleControllerSystem::Update(float dt)
 {
 	for (auto const& entity : entities) {
 		auto& transform = ecsManager.GetComponent<TransformComponent>(entity);

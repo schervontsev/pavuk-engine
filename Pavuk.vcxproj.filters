@@ -78,7 +78,7 @@
     <ClCompile Include="src\Engine\ECS\Systems\SetInputSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\ECS\Systems\CameraControllerSystem.cpp">
+    <ClCompile Include="src\Engine\ECS\Systems\SimpleControllerSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -164,7 +164,7 @@
     <ClInclude Include="src\Engine\ECS\Systems\SetInputSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\ECS\Systems\CameraControllerSystem.h">
+    <ClInclude Include="src\Engine\ECS\Systems\SimpleControllerSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
