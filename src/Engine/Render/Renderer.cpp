@@ -1160,7 +1160,7 @@ void Renderer::updateUniformBuffer(uint32_t currentImage) {
     auto view = glm::lookAt(tr, tr + transformComponent.GetForwardVector(), glm::vec3(0.0f, 1.0f, 0.0f)) * openGlToVulkan;
     auto proj = glm::perspective(cameraComponent.fov, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
     ubo.view_proj = proj * view;
-
+    ubo.light_pos = glm::vec4(10.0, -0.2, 0.0, 0.0);
     vk::DeviceSize bufferSize = sizeof(ubo);
 
     void* data = device->mapMemory(uniformBuffersMemory[currentImage], vk::DeviceSize(0), sizeof(ubo));
