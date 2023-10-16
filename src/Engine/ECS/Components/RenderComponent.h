@@ -2,6 +2,7 @@
 
 struct MeshPushConstants {
 	alignas(16) glm::mat4 transform = glm::mat4(1.f);
+	alignas(16) glm::mat4 normal_matrix = glm::mat4(1.f);
 };
 
 struct RenderComponent {

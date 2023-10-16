@@ -1146,23 +1146,25 @@ void Renderer::updateUniformBuffer(uint32_t currentImage) {
     std::vector<glm::mat4> modelMatrices;
     auto transformComponent = ecsManager.GetComponent<TransformComponent>(scene->GetMainCamera());
     auto cameraComponent = ecsManager.GetComponent<CameraComponent>(scene->GetMainCamera());
-    UniformBufferObject camera {};
+    UniformBufferObject ubo {};
     auto tr = transformComponent.translation;
     tr.y = -tr.y;
 
-    glm::mat4 openGlToVulkan = { 1, 0, 0 ,0,
-                 0, -1, 0, 0,
-                 0, 0, -1, 0,
-                 0, 0, 0, 1 };
+    glm::mat4 openGlToVulkan = {
+    			1, 0, 0 ,0,
+    			0, -1, 0, 0,
+                0, 0, -1, 0,
+                0, 0, 0, 1
+    };
 
     auto view = glm::lookAt(tr, tr + transformComponent.GetForwardVector(), glm::vec3(0.0f, 1.0f, 0.0f)) * openGlToVulkan;
     auto proj = glm::perspective(cameraComponent.fov, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
-    camera.view_proj = proj * view;
+    ubo.view_proj = proj * view;
 
-    vk::DeviceSize bufferSize = sizeof(camera);
+    vk::DeviceSize bufferSize = sizeof(ubo);
 
-    void* data = device->mapMemory(uniformBuffersMemory[currentImage], vk::DeviceSize(0), sizeof(camera));
-    memcpy(data, &camera, sizeof(camera));
+    void* data = device->mapMemory(uniformBuffersMemory[currentImage], vk::DeviceSize(0), sizeof(ubo));
+    memcpy(data, &ubo, sizeof(ubo));
     device->unmapMemory(uniformBuffersMemory[currentImage]);
    
 }

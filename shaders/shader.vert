@@ -8,6 +8,7 @@ layout(binding = 0) uniform UniformBufferObject {
 layout( push_constant ) uniform constants
 {
 	mat4 transform;
+    mat4 normal_matrix;
 } PushConstants;
 
 layout(location = 0) in vec3 inPosition;
@@ -27,10 +28,7 @@ void main() {
     fragColor = inColor;
     fragTexCoord = inTexCoord;
     textureIndex = inTextureIndex;
-
-    mat3 normalMatrix = mat3(PushConstants.transform);
-    normalMatrix = inverse(normalMatrix);
-    normalMatrix = transpose(normalMatrix);
-    fragNormal = normalize(inNormal * normalMatrix);
+    
+    fragNormal = normalize(inNormal * mat3(PushConstants.normal_matrix));
     fragWorldPos = vec3(PushConstants.transform * vec4(inPosition, 1.0));
 }

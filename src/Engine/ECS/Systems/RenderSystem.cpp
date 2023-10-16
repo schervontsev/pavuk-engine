@@ -15,6 +15,7 @@ void RenderSystem::UpdateTransform()
 		auto& render = ecsManager.GetComponent<RenderComponent>(entity);
 
 		render.pushConstants.transform = transform.transform;
+		render.pushConstants.normal_matrix = glm::transpose(glm::inverse(transform.transform));
 	}
 
 }
