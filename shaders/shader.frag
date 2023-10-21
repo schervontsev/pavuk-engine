@@ -11,10 +11,14 @@ layout(location = 1) in vec2 fragTexCoord;
 layout(location = 2) in flat int textureIndex;
 layout(location = 3) in vec3 fragNormal;
 layout(location = 4) in vec3 fragWorldPos;
-layout(location = 5) in LightInfo lights[16];
 
 layout(location = 0) out vec4 outColor;
+
 layout(set = 0, binding = 1) uniform sampler2D texSampler[64];
+
+layout(binding = 2) uniform VertexUniformBufferObject {
+    LightInfo lights[32];
+} ubo;
 
 vec4 CalcLightResult(vec3 lightPos, vec4 lightCol) {
     vec3 norm = normalize(fragNormal);
@@ -33,8 +37,8 @@ void main() {
     vec4 finalLight = ambientStrength * ambientColor;
 
     //point lighting
-    for (int i = 0; i < 16; i++) {
-        finalLight = finalLight + CalcLightResult(lights[i].light_pos, lights[i].light_col);
+    for (int i = 0; i < 32; i++) {
+        finalLight = finalLight + CalcLightResult(ubo.lights[i].light_pos, ubo.lights[i].light_col);
     }
 
     //result

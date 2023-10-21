@@ -1,11 +1,11 @@
 #pragma once
 #include "System.h"
-struct UniformBufferObject;
+struct FragmentUniformBufferObject;
 
 class UpdateLightSystem :
     public System
 {
 public:
-    void UpdateLightInUBO(UniformBufferObject& ubo);
+    void UpdateLightInUBO(FragmentUniformBufferObject& ubo);
 };
 

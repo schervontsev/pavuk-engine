@@ -4,9 +4,9 @@
 #include "../Components/PointLightComponent.h"
 #include "../ECSManager.h"
 
-void UpdateLightSystem::UpdateLightInUBO(UniformBufferObject& ubo)
+void UpdateLightSystem::UpdateLightInUBO(FragmentUniformBufferObject& ubo)
 {
-	const size_t maxLight = 128;
+	const size_t maxLight = 32;
 	size_t curLight = 0;
 	for (auto const& entity : entities) {
 		auto& transform = ecsManager.GetComponent<TransformComponent>(entity);

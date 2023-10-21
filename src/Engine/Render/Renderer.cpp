@@ -443,6 +443,15 @@ void Renderer::createDescriptorSetLayout() {
     samplerLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
     bindings.push_back(samplerLayoutBinding);
 
+
+    vk::DescriptorSetLayoutBinding fragUboLayoutBinding{};
+    fragUboLayoutBinding.binding = 2;
+    fragUboLayoutBinding.descriptorCount = 1;
+    fragUboLayoutBinding.descriptorType = vk::DescriptorType::eUniformBuffer;
+    fragUboLayoutBinding.pImmutableSamplers = nullptr;
+    fragUboLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
+    bindings.push_back(fragUboLayoutBinding);
+
     vk::DescriptorSetLayoutCreateInfo layoutInfo {};
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutInfo.pBindings = bindings.data();
@@ -884,13 +893,22 @@ void Renderer::createIndexBuffer(const std::vector<uint32_t>& indices) {
 }
 
 void Renderer::createUniformBuffers() {
-    vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
+    vk::DeviceSize bufferSize = sizeof(VertexUniformBufferObject);
 
-    uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-    uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    vertexUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    vertexUniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, uniformBuffers[i], uniformBuffersMemory[i]);
+        createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, vertexUniformBuffers[i], vertexUniformBuffersMemory[i]);
+    }
+
+    vk::DeviceSize fragBufferSize = sizeof(FragmentUniformBufferObject);
+
+    fragmentUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    fragmentUniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        createBuffer(fragBufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, fragmentUniformBuffers[i], fragmentUniformBuffersMemory[i]);
     }
 }
 
@@ -930,9 +948,9 @@ void Renderer::createDescriptorSets() {
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vk::DescriptorBufferInfo bufferInfo {};
-        bufferInfo.buffer = uniformBuffers[i];
+        bufferInfo.buffer = vertexUniformBuffers[i];
         bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UniformBufferObject);
+        bufferInfo.range = sizeof(VertexUniformBufferObject);
 
 
         std::vector<vk::WriteDescriptorSet> descriptorWrites {};
@@ -962,6 +980,20 @@ void Renderer::createDescriptorSets() {
         descSet.descriptorCount = (static_cast<uint32_t>(materialSize));
         descSet.pImageInfo = imageInfos.data();
         descriptorWrites.push_back(descSet);
+
+        vk::DescriptorBufferInfo fragbufferInfo{};
+        fragbufferInfo.buffer = fragmentUniformBuffers[i];
+        fragbufferInfo.offset = 0;
+        fragbufferInfo.range = sizeof(FragmentUniformBufferObject);
+
+        auto fragUniformSet = vk::WriteDescriptorSet{};
+        fragUniformSet.dstSet = descriptorSets[i];
+        fragUniformSet.dstBinding = 2;
+        fragUniformSet.dstArrayElement = 0;
+        fragUniformSet.descriptorType = vk::DescriptorType::eUniformBuffer;
+        fragUniformSet.descriptorCount = 1;
+        fragUniformSet.pBufferInfo = &fragbufferInfo;
+        descriptorWrites.push_back(fragUniformSet);
 
         try {
             device->updateDescriptorSets(static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -1153,7 +1185,8 @@ void Renderer::updateUniformBuffer(uint32_t currentImage) {
     std::vector<glm::mat4> modelMatrices;
     auto transformComponent = ecsManager.GetComponent<TransformComponent>(scene->GetMainCamera());
     auto cameraComponent = ecsManager.GetComponent<CameraComponent>(scene->GetMainCamera());
-    UniformBufferObject ubo {};
+    VertexUniformBufferObject ubo_v {};
+    FragmentUniformBufferObject ubo_f {};
     auto tr = transformComponent.translation;
     tr.y = -tr.y;
 
@@ -1165,16 +1198,19 @@ void Renderer::updateUniformBuffer(uint32_t currentImage) {
     };
 
     auto view = glm::lookAt(tr, tr + transformComponent.GetForwardVector(), glm::vec3(0.0f, 1.0f, 0.0f)) * openGlToVulkan;
-    auto proj = glm::perspective(cameraComponent.fov, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
-    ubo.view_proj = proj * view;
+    auto proj = glm::perspective(cameraComponent.fov, swapChainExtent.width / (float) swapChainExtent.height, 0.01f, 100.0f);
+    ubo_v.view_proj = proj * view;
     if (updateLightSystem) {
-        updateLightSystem->UpdateLightInUBO(ubo);
+        updateLightSystem->UpdateLightInUBO(ubo_f);
     }
-	vk::DeviceSize bufferSize = sizeof(ubo);
 
-    void* data = device->mapMemory(uniformBuffersMemory[currentImage], vk::DeviceSize(0), sizeof(ubo));
-    memcpy(data, &ubo, sizeof(ubo));
-    device->unmapMemory(uniformBuffersMemory[currentImage]);
+    void* data = device->mapMemory(vertexUniformBuffersMemory[currentImage], vk::DeviceSize(0), sizeof(ubo_v));
+    memcpy(data, &ubo_v, sizeof(ubo_v));
+    device->unmapMemory(vertexUniformBuffersMemory[currentImage]);
+
+    void* fragData = device->mapMemory(fragmentUniformBuffersMemory[currentImage], vk::DeviceSize(0), sizeof(ubo_f));
+    memcpy(fragData, &ubo_f, sizeof(ubo_f));
+    device->unmapMemory(fragmentUniformBuffersMemory[currentImage]);
    
 }
 

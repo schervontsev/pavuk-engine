@@ -70,7 +70,7 @@ void Scene::Init()
 		transform.translation = glm::vec3(0.0, -0.2, 2.0);
 		ecsManager.AddComponent(light1, transform);
 	}
-	for (int i = 0; i < 12; i++) {
+	for (int i = 0; i < 0; i++) {
 		auto light1 = ecsManager.CreateEntity();
 		ecsManager.AddComponent(light1, PointLightComponent({ glm::vec4(0.2, 0.2, 0.2, 1.0) }));
 		TransformComponent transform;
