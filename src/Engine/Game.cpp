@@ -7,6 +7,7 @@
 #include "ECS/Components/RotateComponent.h"
 #include "ECS/Components/CameraComponent.h"
 #include "ECS/Components/InputComponent.h"
+#include "ECS/Components/PointLightComponent.h"
 #include "ResourceManagers/MaterialManager.h"
 #include "ResourceManagers/MeshManager.h"
 #include "Input/InputManager.h"
@@ -30,6 +31,7 @@ void Game::run()
 
     renderer->SetScene(scene);
     renderer->SetRenderSystem(renderSystem);
+    renderer->SetUpdateLightSystem(updateLightSystem);
 
 	InputManager::Instance()->Init(renderer->initWindow());
 
@@ -85,8 +87,10 @@ void Game::InitECS()
     ecsManager.RegisterComponent<RotateComponent>();
     ecsManager.RegisterComponent<CameraComponent>();
     ecsManager.RegisterComponent<InputComponent>();
+    ecsManager.RegisterComponent<PointLightComponent>();
 
     renderSystem = ecsManager.RegisterSystem<RenderSystem>();
+    updateLightSystem = ecsManager.RegisterSystem<UpdateLightSystem>();
     updateTransformSystem = ecsManager.RegisterSystem<UpdateTransformSystem>();
     rotateSystem = ecsManager.RegisterSystem<RotateSystem>();
     testSystem = ecsManager.RegisterSystem<TestSystem>();
@@ -97,6 +101,11 @@ void Game::InitECS()
     renderSignature.set(ecsManager.GetComponentType<RenderComponent>());
     renderSignature.set(ecsManager.GetComponentType<TransformComponent>());
     ecsManager.SetSystemSignature<RenderSystem>(renderSignature);
+
+    Signature updateLightSignature;
+    updateLightSignature.set(ecsManager.GetComponentType<PointLightComponent>());
+    updateLightSignature.set(ecsManager.GetComponentType<TransformComponent>());
+    ecsManager.SetSystemSignature<UpdateLightSystem>(updateLightSignature);
 
     Signature transformSignature;
     transformSignature.set(ecsManager.GetComponentType<TransformComponent>());

@@ -20,7 +20,9 @@
 #include "UniformBufferObject.h"
 #include "../Scene/Scene.h"
 
+class UpdateLightSystem;
 class RenderSystem;
+
 const int WIDTH = 1280;
 const int HEIGHT = 720;
 
@@ -70,11 +72,13 @@ public:
 
     void SetScene(const std::shared_ptr<Scene>& scene);
     void SetRenderSystem(const std::shared_ptr<RenderSystem>& renderSystem);
+    void SetUpdateLightSystem(const std::shared_ptr<UpdateLightSystem>& newUpdateLightSystem);
 
     void UpdateBuffers();
 
 private:
     std::shared_ptr<RenderSystem> renderSystem;
+    std::shared_ptr<UpdateLightSystem> updateLightSystem;
     std::shared_ptr<GLFWwindow> window;
     std::shared_ptr<Scene> scene;
 
