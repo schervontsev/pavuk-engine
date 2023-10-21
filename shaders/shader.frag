@@ -1,15 +1,28 @@
 #version 450
 #extension GL_EXT_nonuniform_qualifier : enable
 
+struct LightInfo {
+    vec3 light_pos;
+    vec4 light_col;
+};
+
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec2 fragTexCoord;
 layout(location = 2) in flat int textureIndex;
 layout(location = 3) in vec3 fragNormal;
 layout(location = 4) in vec3 fragWorldPos;
-layout(location = 5) in vec3 lightPos;
+layout(location = 5) in LightInfo lights[16];
 
 layout(location = 0) out vec4 outColor;
-layout(set = 0, binding = 1) uniform sampler2D texSampler[5];
+layout(set = 0, binding = 1) uniform sampler2D texSampler[64];
+
+vec4 CalcLightResult(vec3 lightPos, vec4 lightCol) {
+    vec3 norm = normalize(fragNormal);
+    vec3 lightDir = normalize(lightPos - fragWorldPos);
+
+    float diff = max(dot(fragNormal, lightDir), 0.0);
+    return diff * lightCol;
+}
 
 void main() {
     outColor = texture(texSampler[textureIndex], fragTexCoord);
@@ -17,19 +30,15 @@ void main() {
     //ambient lighting
     float ambientStrength = 0.01;
     vec4 ambientColor = vec4(0.6, 0.6, 1.0, 1.0);
-    vec4 ambient = ambientStrength * ambientColor;
+    vec4 finalLight = ambientStrength * ambientColor;
 
     //point lighting
-    vec4 lightColor = vec4(1.0, 0.5, 0.0, 1.0);
-
-    vec3 norm = normalize(fragNormal);
-    vec3 lightDir = normalize(lightPos - fragWorldPos);
-
-    float diff = max(dot(fragNormal, lightDir), 0.0);
-    vec4 diffuse = diff * lightColor;
+    for (int i = 0; i < 16; i++) {
+        finalLight = finalLight + CalcLightResult(lights[i].light_pos, lights[i].light_col);
+    }
 
     //result
-    outColor = (ambient + diffuse) * outColor;
+    outColor = finalLight * outColor;
 
     //debug
     //outColor = vec4(fragWorldPos, 1.0);

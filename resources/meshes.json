@@ -15,5 +15,21 @@
 			"elf_hair",
 			"elf_ce"
 		]
+	},
+	{
+		"id": "bird",
+		"path": "models/bird_yellow_billed_shrike/bird_shrike1.obj",
+		"materials": [
+			"shrike"
+		]
+	},
+	{
+		"id": "maphome",
+		"path": "models/maphome.obj",
+		"materials": [
+			"DIRT",
+			"FLATSTON",
+			"PATHROCK"
+		]
 	}
 ]

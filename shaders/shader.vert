@@ -1,8 +1,13 @@
 #version 450
 
+struct LightInfo {
+    vec3 light_pos;
+    vec4 light_col;
+};
+
 layout(binding = 0) uniform UniformBufferObject {
     mat4 view_proj;
-    vec3 light_pos;
+    LightInfo lights[16];
 } ubo;
 
 //push constants block
@@ -23,7 +28,7 @@ layout(location = 1) out vec2 fragTexCoord;
 layout(location = 2) out int textureIndex;
 layout(location = 3) out vec3 fragNormal;
 layout(location = 4) out vec3 fragWorldPos;
-layout(location = 5) out vec3 lightPos;
+layout(location = 5) out LightInfo lights[16];
 
 void main() {
     gl_Position = ubo.view_proj * PushConstants.transform * vec4(inPosition, 1.0);// + gl_InstanceIndex;
@@ -33,5 +38,5 @@ void main() {
     
     fragNormal = normalize(inNormal * PushConstants.normal_matrix);
     fragWorldPos = vec3(PushConstants.transform * vec4(inPosition, 1.0));
-    lightPos = ubo.light_pos;
+    lights = ubo.lights;
 }

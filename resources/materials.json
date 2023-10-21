@@ -18,5 +18,21 @@
 	{
 		"id": "elf_ce",
 		"path": "textures/elf/ce.png"
+	},
+	{
+		"id": "DIRT",
+		"path": "textures/TALLGRASS.png"
+	},
+	{
+		"id": "FLATSTON",
+		"path": "textures/SNOW.png"
+	},
+	{
+		"id": "PATHROCK",
+		"path": "textures/BIGLEAVES.png"
+	},
+	{
+		"id": "shrike",
+		"path": "textures/bird/bird_shrike1_diff.png"
 	}
 ]
