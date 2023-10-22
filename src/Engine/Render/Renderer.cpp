@@ -119,7 +119,22 @@ void Renderer::cleanup() {
     cleanupSwapChain();
 
     device->destroyBuffer(vertexBuffer);
+    device->destroyBuffer(indexBuffer);
     device->freeMemory(vertexBufferMemory);
+    device->freeMemory(indexBufferMemory);
+
+    for (auto& buffer : vertexUniformBuffers) {
+        device->destroyBuffer(buffer);
+    }
+    for (auto& buffer : fragmentUniformBuffers) {
+        device->destroyBuffer(buffer);
+    }
+    for (auto& memory : vertexUniformBuffersMemory) {
+        device->freeMemory(memory);
+    }
+    for (auto& memory : fragmentUniformBuffersMemory) {
+        device->freeMemory(memory);
+    }
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         device->destroySemaphore(renderFinishedSemaphores[i]);
@@ -214,10 +229,6 @@ void Renderer::setupDebugMessenger() {
         nullptr
     );
 
-    // NOTE: Vulkan-hpp has methods for this, but they trigger linking errors...
-    //instance->createDebugUtilsMessengerEXT(createInfo);
-    //instance->createDebugUtilsMessengerEXTUnique(createInfo);
-
     // NOTE: reinterpret_cast is also used by vulkan.hpp internally for all these structs
     if (CreateDebugUtilsMessengerEXT(*instance, reinterpret_cast<const VkDebugUtilsMessengerCreateInfoEXT*>(&createInfo), nullptr, &callback) != VK_SUCCESS) {
         throw std::runtime_error("failed to set up debug callback!");
@@ -270,7 +281,6 @@ void Renderer::createLogicalDevice() {
 
     auto deviceFeatures = vk::PhysicalDeviceFeatures();
     deviceFeatures.samplerAnisotropy = VK_TRUE;
-
 
     auto indexingFeatures = vk::PhysicalDeviceDescriptorIndexingFeatures();
     indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;

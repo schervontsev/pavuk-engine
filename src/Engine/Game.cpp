@@ -80,7 +80,7 @@ void Game::InitECS()
 {
     ecsManager.Init();
 
-    //TODO: use preprocessor to generate
+    //TODO: use preprocessor to generate or something
     ecsManager.RegisterComponent<RenderComponent>();
     ecsManager.RegisterComponent<TransformComponent>();
     ecsManager.RegisterComponent<GirlComponent>();

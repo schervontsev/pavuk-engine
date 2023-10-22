@@ -14,7 +14,7 @@ layout(location = 4) in vec3 fragWorldPos;
 
 layout(location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 1) uniform sampler2D texSampler[64];
+layout(set = 0, binding = 1) uniform sampler2D texSampler[1];
 
 layout(binding = 2) uniform VertexUniformBufferObject {
     LightInfo lights[32];
