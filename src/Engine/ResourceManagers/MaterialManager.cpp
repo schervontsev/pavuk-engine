@@ -49,3 +49,13 @@ Material MaterialManager::GetMaterial(uint32_t val)
 {
     return materials[materialsByHandle[val]];
 }
+
+void MaterialManager::DestroyMaterials(vk::UniqueDevice& device)
+{
+    for (const auto& mat : materials) {
+        device->destroyImageView(mat.textureImageView, nullptr);
+        device->destroyImage(mat.textureImage, nullptr);
+        device->freeMemory(mat.textureImageMemory);
+    }
+    materials.clear();
+}

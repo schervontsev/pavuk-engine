@@ -98,9 +98,6 @@ void Renderer::UpdateBuffers()
 }
 
 void Renderer::cleanupSwapChain() {
-    device->destroyImageView(depthImageView, nullptr);
-    device->destroyImage(depthImage, nullptr);
-    device->freeMemory(depthImageMemory, nullptr);
 
     for (auto framebuffer : swapChainFramebuffers) {
         device->destroyFramebuffer(framebuffer, nullptr);
@@ -117,6 +114,12 @@ void Renderer::cleanup() {
     // NOTE: instance destruction is handled by UniqueInstance, same for device
 
     cleanupSwapChain();
+
+    MaterialManager::Instance()->DestroyMaterials(device);
+
+    device->destroyImageView(depthImageView, nullptr);
+    device->destroyImage(depthImage, nullptr);
+    device->freeMemory(depthImageMemory, nullptr);
 
     device->destroyBuffer(vertexBuffer);
     device->destroyBuffer(indexBuffer);
@@ -150,6 +153,14 @@ void Renderer::cleanup() {
     if (enableValidationLayers) {
         DestroyDebugUtilsMessengerEXT(*instance, callback, nullptr);
     }
+
+    device->destroyRenderPass(renderPass);
+    device->destroyDescriptorSetLayout(descriptorSetLayout);
+    device->destroySampler(textureSampler);
+    device->destroyPipelineLayout(pipelineLayout);
+    device->destroyPipeline(graphicsPipeline);
+    device->destroyPipelineCache(graphicsPipelineCache);
+    device->destroyDescriptorPool(descriptorPool);
 
     glfwDestroyWindow(window.get());
 

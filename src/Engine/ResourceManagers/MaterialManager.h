@@ -33,6 +33,7 @@ public:
 	uint32_t GetMaterialHandle(const std::string& id);
 	Material GetMaterial(uint32_t val); //TODO: do not return by value
 	std::vector<Material>& GetMaterials() { return materials; };
+	void DestroyMaterials(vk::UniqueDevice& device);
 
 	uint32_t GetMaterialCount() const { return materials.size(); }
 
