@@ -924,11 +924,13 @@ void Renderer::createUniformBuffers() {
 
 void Renderer::createDescriptorPool() {
     size_t materialSize = MaterialManager::Instance()->GetMaterialCount();
-    std::array<vk::DescriptorPoolSize, 2> poolSizes {};
+    std::array<vk::DescriptorPoolSize, 3> poolSizes {};
     poolSizes[0].type = vk::DescriptorType::eUniformBuffer;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     poolSizes[1].type = vk::DescriptorType::eCombinedImageSampler;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * static_cast<uint32_t>(materialSize);
+    poolSizes[2].type = vk::DescriptorType::eUniformBuffer;
+    poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     vk::DescriptorPoolCreateInfo poolInfo {};
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
