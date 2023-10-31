@@ -43,9 +43,9 @@ void InputManager::keyCallback(GLFWwindow*, int key, int scancode, int action, i
 	const auto foundAction = Instance()->keyBinds.find(key);
 	if (foundAction != Instance()->keyBinds.end()) {
 		Instance()->inputBitmask.set(static_cast<int>(foundAction->second), action != GLFW_RELEASE);
-		//Instance()->currentInputs.push_back(foundAction->second);
+		std::cout << "key pressed: " + std::to_string(key) + "\n";
 	}
-	std::cout << "key pressed: " + std::to_string(key);
+	
 }
 
 bool InputManager::InputPressed(Input::Action action) const

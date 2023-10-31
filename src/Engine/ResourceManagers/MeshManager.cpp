@@ -9,7 +9,7 @@
 
 #include "../Render/Vertex.h"
 #include "MaterialManager.h"
-#include "../Utils/json.hpp"
+#include "../../../include/json.hpp"
 
 MeshManager* MeshManager::_instance(nullptr);
 std::mutex MeshManager::_mutex;
@@ -27,13 +27,13 @@ MeshManager* MeshManager::Instance()
 
 void MeshManager::LoadMeshes()
 {
-    std::ifstream ifs("resources/meshes.json");
+    std::ifstream ifs("resources/data/meshes.json");
     const std::string content((std::istreambuf_iterator<char>(ifs)),
         (std::istreambuf_iterator<char>()));
     JSON materialsJson = JSON::Load(content);
     for (auto& el : materialsJson.ArrayRange()) {
         Mesh mesh;
-        auto modelPath = el["path"].ToString();
+        auto modelPath = "resources/" + el["path"].ToString();
         std::vector<uint32_t> materials;
         for (const auto& mat : el["materials"].ArrayRange()) {
             const auto materialHandle = MaterialManager::Instance()->GetMaterialHandle(mat.ToString());

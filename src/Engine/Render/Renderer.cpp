@@ -99,11 +99,11 @@ void Renderer::UpdateBuffers()
 
 void Renderer::cleanupSwapChain() {
 
-    for (auto framebuffer : swapChainFramebuffers) {
+    for (auto& framebuffer : swapChainFramebuffers) {
         device->destroyFramebuffer(framebuffer, nullptr);
     }
 
-    for (auto imageView : swapChainImageViews) {
+    for (auto& imageView : swapChainImageViews) {
         device->destroyImageView(imageView, nullptr);
     }
 
@@ -684,7 +684,7 @@ bool Renderer::hasStencilComponent(VkFormat format) {
 void Renderer::loadTextureImage(Material& material, const std::string& fileName) {
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load(fileName.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    vk::DeviceSize imageSize = texWidth * texHeight * 4;
+    vk::DeviceSize imageSize = vk::DeviceSize(texWidth) * vk::DeviceSize(texHeight) * 4;
 
     if (!pixels) {
         throw std::runtime_error("failed to load texture image!");
@@ -1206,8 +1206,8 @@ void Renderer::updateUniformBuffer(uint32_t currentImage) {
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     std::vector<glm::mat4> modelMatrices;
-    auto transformComponent = ecsManager.GetComponent<TransformComponent>(scene->GetMainCamera());
-    auto cameraComponent = ecsManager.GetComponent<CameraComponent>(scene->GetMainCamera());
+    auto& transformComponent = ecsManager.GetComponent<TransformComponent>(scene->GetMainCamera());
+    auto& cameraComponent = ecsManager.GetComponent<CameraComponent>(scene->GetMainCamera());
     VertexUniformBufferObject ubo_v {};
     FragmentUniformBufferObject ubo_f {};
     auto tr = transformComponent.translation;

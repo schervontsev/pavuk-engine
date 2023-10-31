@@ -104,33 +104,9 @@ void Scene::InitCamera() {
 	ecsManager.AddComponent(mainCamera, CameraComponent{glm::radians(45.f)});
 	ecsManager.AddComponent(mainCamera, TransformComponent{glm::vec3(0.f,-0.01f,0.f)});
 	ecsManager.AddComponent(mainCamera, InputComponent{});
-
-	//TODO: test
-	//ecsManager.AddComponent(mainCamera, RotateComponent{ glm::vec3(0.f, 1.0f, 0.f), 2.f });
 }
 
 void Scene::Update(float dt)
 {
 
-	/*{
-		//TODO: Debug logic
-		timeFromStart += dt;
-		if (models.empty()) {
-			return;
-		}
-		models.back().AddEulerAngle(glm::vec3(0.f, 0.f, dt * 10.0));
-		if (timeFromStart > 4.f && timeFromStart < 10.f && models.size() == 2) {
-			models.erase(models.begin(), models.begin() + 1);
-			SetDirty(true);
-		}
-		else if (models.size() == 1 && timeFromStart > 10.f) {
-			Mesh room;
-			room.loadModel(0, "models/viking_room.obj", "models/", "textures/viking_room.png");
-			models.push_back(room);
-			SetDirty(true);
-		}
-	}
-	for (auto& model : models) {
-		model.UpdatePushConstants();
-	}*/
 }

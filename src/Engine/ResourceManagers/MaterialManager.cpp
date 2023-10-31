@@ -1,7 +1,7 @@
 #include "MaterialManager.h"
 
 #include <fstream>
-#include "../Utils/json.hpp"
+#include "../../../include/json.hpp"
 
 MaterialManager* MaterialManager::_instance(nullptr);
 std::mutex MaterialManager::_mutex;
@@ -19,13 +19,13 @@ MaterialManager* MaterialManager::Instance()
 
 void MaterialManager::LoadMaterials()
 {
-    std::ifstream ifs("resources/materials.json");
+    std::ifstream ifs("resources/data/materials.json");
     const std::string content((std::istreambuf_iterator<char>(ifs)),
         (std::istreambuf_iterator<char>()));
     JSON materialsJson = JSON::Load(content);
     for (auto& el : materialsJson.ArrayRange()) {
         Material material;
-        material.texturePath = el["path"].ToString();
+        material.texturePath = "resources/" + el["path"].ToString();
         AddMaterial(el["id"].ToString(), material);
     }
 }
