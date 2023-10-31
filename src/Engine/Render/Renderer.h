@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Vertex.h"
-
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -17,6 +15,7 @@
 #include <cstdint>
 #include <optional>
 
+#include "Vertex.h"
 #include "UniformBufferObject.h"
 #include "../Scene/Scene.h"
 
@@ -60,15 +59,16 @@ struct SwapChainSupportDetails {
 class Renderer {
 public:
     GLFWwindow* initWindow();
-    void initVulkan();
+    void InitVulkan();
 
-    void cleanup();
+    void Update(float dt);
 
-    void drawFrame();
+    void Cleanup();
+
+    void DrawFrame();
 
     bool WindowShouldClose();
     void WaitDevice();
-
 
     void SetScene(const std::shared_ptr<Scene>& scene);
     void SetRenderSystem(const std::shared_ptr<RenderSystem>& renderSystem);
@@ -77,12 +77,93 @@ public:
     void UpdateBuffers();
 
 private:
+    static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+        auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
+        app->framebufferResized = true;
+    }
+
+    void CreateInstance();
+    void CreateSurface();
+    void CreateRenderPass();
+    void CreateGraphicsPipeline();
+    void CreateFramebuffers();
+    void CreateCommandPool();
+    vk::UniqueShaderModule CreateShaderModule(const std::vector<char>& code);
+
+    void CreateDepthResources();
+    void CreateTextureImages();
+
+    void CreateDescriptorSetLayout();
+    void CreateDescriptorPool();
+    void CreateDescriptorSets();
+
+    void CreateSyncObjects();
+
+    void CreateImageViews();
+    void CreateTextureImageView();
+    void CreateTextureSampler();
+    vk::ImageView CreateImageView(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags);
+    void CreateImage(int width, int height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory);
+    
+    void LoadTextureImage(Material& material, const std::string& fileName);
+    void TransitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+
+    void CreateVertexBuffer(const std::vector<Vertex>& vertices);
+    void CreateIndexBuffer(const std::vector<uint32_t>& indices);
+    void CreateUniformBuffers();
+    void UpdateUniformBuffer(uint32_t currentImage);
+    void CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
+    void CopyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
+    void CopyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
+
+    void CreateCommandBuffers();
+    void RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
+
+    vk::CommandBuffer BeginSingleTimeCommands();
+    void EndSingleTimeCommands(vk::CommandBuffer commandBuffer);
+
+    void PickPhysicalDevice();
+    void CreateLogicalDevice();
+
+    void CreateSwapChain();
+    void CleanupSwapChain();
+    void RecreateSwapChain();
+
+    void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+    void SetupDebugMessenger();
+
+    vk::Format FindSupportedFormat(const std::vector< vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
+    vk::Format FindDepthFormat();
+
+    bool HasStencilComponent(VkFormat format);
+    uint32_t FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+    bool IsDeviceSuitable(vk::PhysicalDevice device);
+    bool CheckDeviceExtensionSupport(vk::PhysicalDevice device);
+    QueueFamilyIndices FindQueueFamilies(vk::PhysicalDevice device);
+    std::vector<const char*> GetRequiredExtensions();
+    bool CheckValidationLayerSupport();
+
+    vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+    vk::PresentModeKHR ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+    vk::Extent2D ChooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
+    SwapChainSupportDetails QuerySwapChainSupport(const vk::PhysicalDevice& device);
+
+    static std::vector<char> ReadFile(const std::string& filename); //TODO: move to utils
+
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+
+    VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+
+
+private:
     std::shared_ptr<RenderSystem> renderSystem;
     std::shared_ptr<UpdateLightSystem> updateLightSystem;
     std::shared_ptr<GLFWwindow> window;
     std::shared_ptr<Scene> scene;
 
     vk::UniqueInstance instance;
+
     VkDebugUtilsMessengerEXT callback;
     vk::SurfaceKHR surface;
 
@@ -111,7 +192,6 @@ private:
     vk::DeviceMemory depthImageMemory;
     vk::ImageView depthImageView;
 
-    
     vk::Sampler textureSampler;
 
     vk::Buffer vertexBuffer;
@@ -135,124 +215,5 @@ private:
     std::vector<vk::Fence> inFlightFences;
     size_t currentFrame = 0;
 
-    bool framebufferResized = false;
-
-    static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-        auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
-        app->framebufferResized = true;
-    }
-
-    void cleanupSwapChain();
-    void recreateSwapChain();
-    void createInstance();
-
-    void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-
-    void setupDebugMessenger();
-
-    void createSurface();
-
-    void pickPhysicalDevice();
-
-    void createLogicalDevice();
-
-    void createSwapChain();
-
-    void createImageViews();
-
-    void createRenderPass();
-
-    void createDescriptorSetLayout();
-
-    void createGraphicsPipeline();
-
-    void createFramebuffers();
-
-    void createCommandPool();
-
-    void createDepthResources();
-
-    vk::Format findSupportedFormat(const std::vector< vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
-
-    vk::Format findDepthFormat();
-
-    bool hasStencilComponent(VkFormat format);
-
-    void loadTextureImage(Material& material, const std::string& fileName);
-
-    void createTextureImageView();
-
-    void createTextureSampler();
-
-    vk::ImageView createImageView(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags);
-
-    void createImage(int width, int height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory);
-
-    void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
-
-    void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
-
-    void createTextureImages();
-
-    void createVertexBuffer(const std::vector<Vertex>& vertices);
-
-    void createIndexBuffer(const std::vector<uint32_t>& indices);
-
-    void createUniformBuffers();
-
-    void createDescriptorPool();
-
-    void createDescriptorSets();
-
-    void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
-
-    vk::CommandBuffer beginSingleTimeCommands();
-
-    void endSingleTimeCommands(vk::CommandBuffer commandBuffer);
-
-    void copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
-
-    uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
-
-    void createCommandBuffers();
-
-    void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
-
-    void createSyncObjects();
-
-    void updateUniformBuffer(uint32_t currentImage);
-
-    vk::UniqueShaderModule createShaderModule(const std::vector<char>& code);
-
-    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
-
-    vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
-
-    vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
-
-    SwapChainSupportDetails querySwapChainSupport(const vk::PhysicalDevice& device);
-
-    bool isDeviceSuitable(vk::PhysicalDevice device);
-
-    bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
-
-    QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
-
-    std::vector<const char*> getRequiredExtensions();
-
-    bool checkValidationLayerSupport();
-
-    static std::vector<char> readFile(const std::string& filename);
-
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
-
-
-    VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
-
-    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
-
-    void LoadCube();
-
-public:
-    void Update(float dt);
+    bool framebufferResized = false;    
 };

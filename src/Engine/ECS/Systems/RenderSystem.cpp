@@ -22,7 +22,7 @@ void RenderSystem::UpdateTransform()
 
 void RenderSystem::UpdateCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout)
 {
-	uint32_t indicesSize = 0;
+	size_t indicesSize = 0;
 	int32_t verticesSize = 0;
 	for (auto const& entity : entities) {
 		auto& render = ecsManager.GetComponent<RenderComponent>(entity);

@@ -35,7 +35,7 @@ void Game::run()
 
 	InputManager::Instance()->Init(renderer->initWindow());
 
-	renderer->initVulkan();
+	renderer->InitVulkan();
     renderer->UpdateBuffers();
     mainLoop();
     cleanup();
@@ -43,7 +43,7 @@ void Game::run()
 
 void Game::cleanup()
 {
-    renderer->cleanup();
+    renderer->Cleanup();
 }
 
 void Game::mainLoop() {
@@ -70,7 +70,7 @@ void Game::mainLoop() {
 
         renderer->Update(dt);
         renderer->UpdateBuffers();
-        renderer->drawFrame();
+        renderer->DrawFrame();
     }
 
     renderer->WaitDevice();

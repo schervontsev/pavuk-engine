@@ -35,10 +35,10 @@ public:
 	std::vector<Material>& GetMaterials() { return materials; };
 	void DestroyMaterials(vk::UniqueDevice& device);
 
-	uint32_t GetMaterialCount() const { return materials.size(); }
+	size_t GetMaterialCount() const { return materials.size(); }
 
 private:
-	std::unordered_map<uint32_t, uint32_t> materialsByHandle;
+	std::unordered_map<uint32_t, size_t> materialsByHandle;
 	std::unordered_map<std::string, uint32_t> materialHandlesById;
 	std::vector<Material> materials;
 	uint32_t nextId = 0;

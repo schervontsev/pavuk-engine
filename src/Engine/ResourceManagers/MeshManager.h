@@ -35,7 +35,7 @@ public:
 	uint32_t GetMeshHandle(const std::string& id) { return meshHandlesById[id]; }
 private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
-	std::unordered_map<uint32_t, uint32_t> meshesByHandle;
+	std::unordered_map<uint32_t, size_t> meshesByHandle;
 	std::unordered_map<std::string, uint32_t> meshHandlesById;
 
 	uint32_t nextId;
