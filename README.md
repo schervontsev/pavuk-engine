@@ -13,3 +13,8 @@ Keep in mind, it's just a prototype, mostly for my own amusment and learning abo
  - Visual studio. CMake is in future plans.
  - [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/). Project uses environment variable VULKAN_SDK
  - GLFW. Provided as a submodule.
+
+## Plans for the near future
+ - Shadowmapping
+ - Converting project to static library or otherwise separating engine code from the game
+ - Refactoring Renderer class according to OOP principles.
