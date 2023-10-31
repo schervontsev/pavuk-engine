@@ -8,7 +8,7 @@
 #include "../Components/RenderComponent.h"
 #include "../Components/InputComponent.h"
 #include "../ECSManager.h"
-#include "../../Scene/Scene.h"
+#include "../../../Scene/Scene.h"
 
 void TestSystem::Update(float dt, Scene* scene)
 {

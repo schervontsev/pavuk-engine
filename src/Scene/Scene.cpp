@@ -1,12 +1,12 @@
 #include "Scene.h"
-#include "../ECS/ECSManager.h"
-#include "../ECS/Components/TransformComponent.h"
-#include "../ECS/Components/RenderComponent.h"
-#include "../ECS/Components/RotateComponent.h"
-#include "../ECS/Components/GirlComponent.h"
-#include "../ECS/Components/PointLightComponent.h"
-#include "../ECS/Components/CameraComponent.h"
-#include "../ECS/Components/InputComponent.h"
+#include "../Engine/ECS/ECSManager.h"
+#include "../Engine/ECS/Components/TransformComponent.h"
+#include "../Engine/ECS/Components/RenderComponent.h"
+#include "../Engine/ECS/Components/RotateComponent.h"
+#include "../Engine/ECS/Components/GirlComponent.h"
+#include "../Engine/ECS/Components/PointLightComponent.h"
+#include "../Engine/ECS/Components/CameraComponent.h"
+#include "../Engine/ECS/Components/InputComponent.h"
 
 Scene::Scene()
 {

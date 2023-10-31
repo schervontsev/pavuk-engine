@@ -17,7 +17,7 @@
 
 #include "Vertex.h"
 #include "UniformBufferObject.h"
-#include "../Scene/Scene.h"
+#include "../../Scene/Scene.h"
 
 class UpdateLightSystem;
 class RenderSystem;

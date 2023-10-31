@@ -34,7 +34,7 @@
     <ClCompile Include="src\Engine\ECS\ComponentManager.cpp" />
     <ClCompile Include="src\Engine\Game.cpp" />
     <ClCompile Include="src\Engine\Render\Renderer.cpp" />
-    <ClCompile Include="src\Engine\Scene\Scene.cpp" />
+    <ClCompile Include="src\Scene\Scene.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Engine\Render\Vertex.cpp" />
     <ClCompile Include="src\Engine\ECS\Systems\System.cpp" />
@@ -67,7 +67,7 @@
     <ClInclude Include="src\Engine\Render\Renderer.h" />
     <ClInclude Include="src\Engine\Render\Vertex.h" />
     <ClInclude Include="src\Engine\ECS\Systems\System.h" />
-    <ClInclude Include="src\Engine\Scene\Scene.h" />
+    <ClInclude Include="src\Scene\Scene.h" />
     <ClInclude Include="src\Engine\ECS\SystemManager.h" />
     <ClInclude Include="src\Engine\ECS\Components\TransformComponent.h" />
     <ClInclude Include="src\Engine\Utils\json.hpp" />

@@ -1,6 +1,6 @@
 #pragma once
 #include "Render/Renderer.h"
-#include "Scene/Scene.h"
+#include "../Scene/Scene.h"
 //systems
 #include "ECS/Systems/SimpleControllerSystem.h"
 #include "ECS/Systems/RenderSystem.h"
