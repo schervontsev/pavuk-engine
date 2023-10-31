@@ -32,5 +32,6 @@ GLFW is provided as a submodule and uses a zlib/libpng license:
         This notice may not be removed or altered from any source distribution.
 
 Resources used for demonstration:
-Elf girl by yellow09 - https://sketchfab.com/3d-models/elf-girl-52f2e84961b94760b7805c178890d644 licensed with CC 4.0 https://creativecommons.org/licenses/by/4.0/
-Bird (Yellow-Billed Shrike) by pistachio - https://opengameart.org/content/bird-yellow-billed-shrike licensed with CC0 (Public Domain)
+ - Elf girl by yellow09 - https://sketchfab.com/3d-models/elf-girl-52f2e84961b94760b7805c178890d644 licensed with CC 4.0 https://creativecommons.org/licenses/by/4.0/
+ - Bird (Yellow-Billed Shrike) by pistachio - https://opengameart.org/content/bird-yellow-billed-shrike licensed with CC0 (Public Domain)
+ - "Pixel Texture Pack" by jestan - https://jestan.itch.io/pixel-texture-pack licensed with Creative Commons Zero v1.0 Universal (Public Domain)
