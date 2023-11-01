@@ -252,7 +252,7 @@ void Renderer::CreateSurface() {
         throw std::runtime_error("failed to create window surface!");
     }
 
-    surface = rawSurface;
+    surface = vk::SurfaceKHR(rawSurface);
 }
 
 void Renderer::PickPhysicalDevice() {
