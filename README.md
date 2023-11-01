@@ -16,7 +16,8 @@ Keep in mind, it's just a prototype, mostly for my own amusment and learning abo
 
 ## Plans for the near future
  - Shadowmapping
+ - Skeletal animation
+ - imGUI integration
  - Adding other light types.
  - Converting project to static library or otherwise separating engine code from the game.
  - Refactoring Renderer class according to OOP principles.
- - CMake integration
