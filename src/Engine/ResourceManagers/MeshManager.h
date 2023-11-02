@@ -4,8 +4,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-
-struct Vertex;
+#include "../Render/Vertex.h"
 
 struct Mesh
 {

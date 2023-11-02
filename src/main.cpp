@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Engine/Game.h"
 
 #include <iostream>

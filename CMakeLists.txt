@@ -17,6 +17,7 @@ if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
 	find_package(Vulkan)
 endif()
 
+
 IF (NOT Vulkan_FOUND)
 	message(FATAL_ERROR "Could not find Vulkan library!")
 ELSE()
@@ -25,11 +26,6 @@ ENDIF()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-#include_directories(${Vulkan_INCLUDE_DIRS})
-#include_directories(${PROJECT_SOURCE_DIR}/include)
-#include_directories(${PROJECT_SOURCE_DIR}/glfw/include)
-#include_directories(${PROJECT_SOURCE_DIR})
 
 IF(WIN32)
 	# Nothing here (yet)
@@ -60,11 +56,12 @@ target_include_directories(pavuk_engine PRIVATE ${PROJECT_SOURCE_DIR}/include)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS ON)
 
 add_subdirectory(glfw)
 
 target_link_libraries (pavuk_engine glfw)
-target_link_libraries(pavuk_engine Vulkan::Vulkan)
+target_link_libraries (pavuk_engine Vulkan::Vulkan)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET pavuk_engine PROPERTY CXX_STANDARD 17)

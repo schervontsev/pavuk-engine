@@ -834,10 +834,9 @@ void Renderer::TransitionImageLayout(vk::Image image, vk::Format format, vk::Ima
     } else {
         throw std::invalid_argument("unsupported layout transition!");
     }
-    
     commandBuffer.pipelineBarrier(
         sourceStage, destinationStage,
-        vk::DependencyFlags::Flags(),
+        vk::DependencyFlags(),
         0, nullptr,
         0, nullptr,
         1, &barrier
