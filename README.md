@@ -18,6 +18,6 @@ Keep in mind, it's just a prototype, mostly for my own amusment and learning abo
  - Shadowmapping
  - Skeletal animation
  - imGUI integration
- - Adding other light types.
+ - Adding other light types, attenuation, etc.
  - Converting project to static library or otherwise separating engine code from the game.
- - Refactoring Renderer class according to OOP principles.
+ - Refactoring Renderer class according to SOLID principles.
