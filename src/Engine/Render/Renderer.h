@@ -22,8 +22,12 @@
 class UpdateLightSystem;
 class RenderSystem;
 
+//TODO: move to config
 const int WIDTH = 1280;
 const int HEIGHT = 720;
+
+const int SHADOW_WIDTH = 1024;
+const int SHADOW_HEIGHT = 1024;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -91,6 +95,7 @@ private:
     vk::UniqueShaderModule CreateShaderModule(const std::vector<char>& code);
 
     void CreateDepthResources();
+    void CreateShadowmapImage();
     void CreateTextureImages();
 
     void CreateDescriptorSetLayout();
@@ -103,7 +108,7 @@ private:
     void CreateTextureImageView();
     void CreateTextureSampler();
     vk::ImageView CreateImageView(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags);
-    void CreateImage(int width, int height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory);
+    void CreateImage(vk::ImageCreateInfo imageInfo, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory);
     
     void LoadTextureImage(Material& material, const std::string& fileName);
     void TransitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
@@ -191,6 +196,10 @@ private:
     vk::Image depthImage;
     vk::DeviceMemory depthImageMemory;
     vk::ImageView depthImageView;
+
+    vk::Image shadowImage;
+    vk::DeviceMemory shadowImageMemory;
+    vk::ImageView shadowImageView;
 
     vk::Sampler textureSampler;
 

@@ -651,8 +651,41 @@ void Renderer::CreateCommandPool() {
 void Renderer::CreateDepthResources() {
     vk::Format depthFormat = FindDepthFormat();
 
-    CreateImage(swapChainExtent.width, swapChainExtent.height, depthFormat, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eDepthStencilAttachment, vk::MemoryPropertyFlagBits::eDeviceLocal, depthImage, depthImageMemory);
+    vk::ImageCreateInfo imageInfo {};
+    imageInfo.imageType = vk::ImageType::e2D;
+    imageInfo.extent.width = swapChainExtent.width;
+    imageInfo.extent.height = swapChainExtent.height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = FindDepthFormat();
+    imageInfo.tiling = vk::ImageTiling::eOptimal;
+    imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+    imageInfo.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+    imageInfo.samples = vk::SampleCountFlagBits::e1;
+    imageInfo.sharingMode = vk::SharingMode::eExclusive;
+
+    CreateImage(imageInfo, vk::MemoryPropertyFlagBits::eDeviceLocal, depthImage, depthImageMemory);
     depthImageView = CreateImageView(depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth);
+}
+
+void Renderer::CreateShadowmapImage() {
+    vk::ImageCreateInfo imageInfo {};
+    imageInfo.imageType = vk::ImageType::e2D;
+    imageInfo.extent.width = SHADOW_WIDTH;
+    imageInfo.extent.height = SHADOW_HEIGHT;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 6;
+    imageInfo.format = vk::Format::eD32Sfloat;
+    imageInfo.tiling = vk::ImageTiling::eOptimal;
+    imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+    imageInfo.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled;
+    imageInfo.samples = vk::SampleCountFlagBits::e1;
+    imageInfo.sharingMode = vk::SharingMode::eExclusive;
+
+    CreateImage(imageInfo, vk::MemoryPropertyFlagBits::eDeviceLocal, shadowImage, shadowImageMemory);
+    shadowImageView = CreateImageView(shadowImage, vk::Format::eD32Sfloat, vk::ImageAspectFlagBits::eDepth);
 }
 
 vk::Format Renderer::FindSupportedFormat(const std::vector< vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features) {
@@ -699,8 +732,20 @@ void Renderer::LoadTextureImage(Material& material, const std::string& fileName)
     device->unmapMemory(stagingBufferMemory);
 
     stbi_image_free(pixels);
-
-    CreateImage(texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, vk::MemoryPropertyFlagBits::eDeviceLocal, material.textureImage, material.textureImageMemory);
+    vk::ImageCreateInfo imageInfo {};
+    imageInfo.imageType = vk::ImageType::e2D;
+    imageInfo.extent.width = texWidth;
+    imageInfo.extent.height = texHeight;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = vk::Format::eR8G8B8A8Srgb;
+    imageInfo.tiling = vk::ImageTiling::eOptimal;
+    imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+    imageInfo.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
+    imageInfo.samples = vk::SampleCountFlagBits::e1;
+    imageInfo.sharingMode = vk::SharingMode::eExclusive;
+    CreateImage(imageInfo, vk::MemoryPropertyFlagBits::eDeviceLocal, material.textureImage, material.textureImageMemory);
 
     TransitionImageLayout(material.textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
     CopyBufferToImage(stagingBuffer, material.textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
@@ -747,10 +792,10 @@ vk::ImageView Renderer::CreateImageView(vk::Image image, vk::Format format, vk::
     createInfo.image = image;
     createInfo.viewType = vk::ImageViewType::e2D;
     createInfo.format = format;
-    createInfo.components.r = vk::ComponentSwizzle::eIdentity;
-    createInfo.components.g = vk::ComponentSwizzle::eIdentity;
-    createInfo.components.b = vk::ComponentSwizzle::eIdentity;
-    createInfo.components.a = vk::ComponentSwizzle::eIdentity;
+    createInfo.components.r = vk::ComponentSwizzle::eR;
+    createInfo.components.g = vk::ComponentSwizzle::eG;
+    createInfo.components.b = vk::ComponentSwizzle::eB;
+    createInfo.components.a = vk::ComponentSwizzle::eA;
     createInfo.subresourceRange.aspectMask = aspectFlags;
     createInfo.subresourceRange.baseMipLevel = 0;
     createInfo.subresourceRange.levelCount = 1;
@@ -762,24 +807,9 @@ vk::ImageView Renderer::CreateImageView(vk::Image image, vk::Format format, vk::
     } catch (vk::SystemError err) {
         throw std::runtime_error("failed to create image views!");
     }
-    return vk::ImageView();
 }
 
-void Renderer::CreateImage(int width, int height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory) {
-    vk::ImageCreateInfo imageInfo {};
-    imageInfo.imageType = vk::ImageType::e2D;
-    imageInfo.extent.width = width;
-    imageInfo.extent.height = height;
-    imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1;
-    imageInfo.arrayLayers = 1;
-    imageInfo.format = format;
-    imageInfo.tiling = tiling;
-    imageInfo.initialLayout = vk::ImageLayout::eUndefined;
-    imageInfo.usage = usage;
-    imageInfo.samples = vk::SampleCountFlagBits::e1;
-    imageInfo.sharingMode = vk::SharingMode::eExclusive;
-
+void Renderer::CreateImage(vk::ImageCreateInfo imageInfo, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory) {
     try {
         auto result = device->createImage(&imageInfo, nullptr, &image);
     } catch (vk::SystemError err) {
