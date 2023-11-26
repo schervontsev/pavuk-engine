@@ -97,6 +97,7 @@ private:
     void CreateRenderPass();
     void CreateShadowPass();
     void CreateGraphicsPipeline();
+    void CreateShadowsPipeline(vk::GraphicsPipelineCreateInfo baseInfo);
     void CreateFramebuffers();
     void CreateShadowFramebuffers();
     void CreateCommandPool();
@@ -212,6 +213,7 @@ private:
     std::array<vk::Framebuffer, 6> shadowBuffers;
     vk::PipelineLayout shadowPipelineLayout;
     vk::Pipeline shadowPipeline;
+    //vk::Pipeline shadowCubePipeline;
     vk::DescriptorSet shadowDescriptorSet;
 
     vk::Sampler textureSampler;

@@ -14,6 +14,7 @@ class RenderSystem : public System
 public:
 	void UpdateTransform();
 	void UpdateCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout);
+	void UpdateCommandBufferForShadows(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout);
 	void UpdateMeshHandles();
 
     std::vector<Vertex> GetVertices();

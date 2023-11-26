@@ -63,6 +63,7 @@ void Renderer::InitVulkan() {
     CreateSwapChain();
     CreateImageViews();
     CreateRenderPass();
+    CreateShadowPass();
     CreateDescriptorSetLayout();
     CreateGraphicsPipeline();
     CreateCommandPool();
@@ -623,6 +624,7 @@ void Renderer::CreateGraphicsPipeline() {
         throw std::runtime_error("failed to create pipeline layout!");
     }
 
+
     vk::GraphicsPipelineCreateInfo pipelineInfo = {};
     pipelineInfo.stageCount = 2;
     pipelineInfo.pStages = shaderStages;
@@ -643,9 +645,112 @@ void Renderer::CreateGraphicsPipeline() {
         auto result = device->createGraphicsPipeline(nullptr, pipelineInfo);
         graphicsPipeline = result.value;
 
-    } catch (vk::SystemError err) {
+    }
+    catch (vk::SystemError err) {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
+
+    CreateShadowsPipeline(pipelineInfo);
+}
+
+void Renderer::CreateShadowsPipeline(vk::GraphicsPipelineCreateInfo baseInfo) {
+    //TODO: combine similar parts with graphics pipeline creation
+
+    vk::PushConstantRange shadowPushConstants;
+    shadowPushConstants.offset = 0;
+    shadowPushConstants.size = sizeof(glm::mat4);
+    shadowPushConstants.stageFlags = vk::ShaderStageFlagBits::eVertex;
+
+    vk::PipelineLayoutCreateInfo shadowPipelineLayoutInfo = {};
+    shadowPipelineLayoutInfo.setLayoutCount = 1;
+    shadowPipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+    shadowPipelineLayoutInfo.pPushConstantRanges = &shadowPushConstants;
+    shadowPipelineLayoutInfo.pushConstantRangeCount = 1;
+
+    try {
+        shadowPipelineLayout = device->createPipelineLayout(shadowPipelineLayoutInfo);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create shadow pipeline layout!");
+    }
+
+    auto vertShaderCode = ReadFile("shaders/shadows/vert.spv");
+    auto fragShaderCode = ReadFile("shaders/shadows/frag.spv");
+
+    auto vertShaderModule = CreateShaderModule(vertShaderCode);
+    auto fragShaderModule = CreateShaderModule(fragShaderCode);
+
+    vk::PipelineShaderStageCreateInfo shaderStages[] = {
+            {
+                vk::PipelineShaderStageCreateFlags(),
+                vk::ShaderStageFlagBits::eVertex,
+                *vertShaderModule,
+                "main"
+            },
+            {
+                vk::PipelineShaderStageCreateFlags(),
+                vk::ShaderStageFlagBits::eFragment,
+                *fragShaderModule,
+                "main"
+            }
+    };
+
+
+    baseInfo.layout = shadowPipelineLayout;
+    baseInfo.renderPass = shadowPass;
+
+    try {
+        auto result = device->createGraphicsPipeline(nullptr, baseInfo);
+        shadowPipeline = result.value;
+
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create graphics pipeline!");
+    }/*
+    auto vertShaderCodeCube = ReadFile("shaders/shadows/cube/vert.spv");
+    auto fragShaderCodeCube = ReadFile("shaders/shadows/cube/frag.spv");
+
+    auto vertShaderModuleCube = CreateShaderModule(vertShaderCodeCube);
+    auto fragShaderModuleCube = CreateShaderModule(fragShaderCodeCube);
+
+    vk::PipelineShaderStageCreateInfo shaderStagesCube[] = {
+            {
+                vk::PipelineShaderStageCreateFlags(),
+                vk::ShaderStageFlagBits::eVertex,
+                *vertShaderModuleCube,
+                "main"
+            },
+            {
+                vk::PipelineShaderStageCreateFlags(),
+                vk::ShaderStageFlagBits::eFragment,
+                *fragShaderModuleCube,
+                "main"
+            }
+    };
+
+    vk::PipelineVertexInputStateCreateInfo emptyInputState = {};
+
+    baseInfo.layout = pipelineLayout;
+    baseInfo.renderPass = renderPass;
+    baseInfo.pVertexInputState = &emptyInputState;
+    vk::PipelineRasterizationStateCreateInfo rasterizer = {};
+    rasterizer.depthClampEnable = VK_FALSE;
+    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+    rasterizer.polygonMode = vk::PolygonMode::eFill;
+    rasterizer.lineWidth = 1.0f;
+    rasterizer.cullMode = vk::CullModeFlagBits::eNone;
+    rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
+    rasterizer.depthBiasEnable = VK_FALSE;
+    baseInfo.pRasterizationState = &rasterizer;
+
+    try {
+        auto result = device->createGraphicsPipeline(nullptr, baseInfo);
+        shadowCubePipeline = result.value;
+
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create shadowCubePipeline pipeline!");
+    }*/
 }
 
 void Renderer::CreateFramebuffers() {
@@ -736,7 +841,7 @@ void Renderer::CreateDepthResources() {
 void Renderer::UpdateShadowCubeFace(uint32_t faceIndex, vk::CommandBuffer commandBuffer)
 {
     vk::ClearValue clearValues[2];
-    clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+    clearValues[0].color = { std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } };
     clearValues[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
     vk::RenderPassBeginInfo renderPassBeginInfo{};
@@ -778,26 +883,22 @@ void Renderer::UpdateShadowCubeFace(uint32_t faceIndex, vk::CommandBuffer comman
 
     // Update shader push constant block
     // Contains current face view matrix
-
-    vk::PushConstantRange push_constant;
-    push_constant.offset = 0;
-    push_constant.size = sizeof(glm::mat4);
-    push_constant.stageFlags = vk::ShaderStageFlagBits::eVertex;
-
-    //vkCmdPushConstants(
-    //    commandBuffer,
-    //    shadowPipelineLayout,
-    //    VK_SHADER_STAGE_VERTEX_BIT,
-    //    0,
-    //    sizeof(glm::mat4),
-    //    &viewMatrix);
+    commandBuffer.pushConstants(shadowPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4), &viewMatrix);
 
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, shadowPipeline);
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, shadowPipelineLayout, 0, 1, &shadowDescriptorSet, 0, nullptr);
 
+    renderSystem->UpdateCommandBufferForShadows(commandBuffer, shadowPipelineLayout);
     //models.scene.draw(commandBuffer);
 
-    vkCmdEndRenderPass(commandBuffer);
+    commandBuffer.endRenderPass();
+
+    try {
+        commandBuffer.end();
+    }
+    catch (vk::SystemError) {
+        throw std::runtime_error("failed to record shad command buffer!");
+    }
 }
 
 void Renderer::CreateShadowmapImage() {
@@ -1332,7 +1433,7 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
         commandBuffer.setScissor(0, 1, &scissor);
 
         for (uint32_t face = 0; face < 6; face++) {
-            UpdateCubeFace(face, commandBuffer);
+            UpdateShadowCubeFace(face, commandBuffer);
         }
     }
 
