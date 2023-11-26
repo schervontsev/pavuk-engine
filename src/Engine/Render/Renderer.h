@@ -60,6 +60,12 @@ struct SwapChainSupportDetails {
     std::vector<vk::PresentModeKHR> presentModes;
 };
 
+struct FrameBufferAttachment {
+    vk::Image image;
+    vk::DeviceMemory mem;
+    vk::ImageView view;
+};
+
 class Renderer {
 public:
     GLFWwindow* initWindow();
@@ -89,12 +95,15 @@ private:
     void CreateInstance();
     void CreateSurface();
     void CreateRenderPass();
+    void CreateShadowPass();
     void CreateGraphicsPipeline();
     void CreateFramebuffers();
+    void CreateShadowFramebuffers();
     void CreateCommandPool();
     vk::UniqueShaderModule CreateShaderModule(const std::vector<char>& code);
 
     void CreateDepthResources();
+    void UpdateShadowCubeFace(uint32_t faceIndex, vk::CommandBuffer commandBuffer);
     void CreateShadowmapImage();
     void CreateTextureImages();
 
@@ -180,12 +189,14 @@ private:
 
     vk::SwapchainKHR swapChain;
     std::vector<vk::Image> swapChainImages;
-    vk::Format swapChainImageFormat;
-    vk::Extent2D swapChainExtent;
     std::vector<vk::ImageView> swapChainImageViews;
     std::vector<vk::Framebuffer> swapChainFramebuffers;
 
+    vk::Format swapChainImageFormat;
+    vk::Extent2D swapChainExtent;
+
     vk::RenderPass renderPass;
+
     vk::PipelineLayout pipelineLayout;
     vk::Pipeline graphicsPipeline;
     vk::PipelineCache graphicsPipelineCache;
@@ -193,13 +204,15 @@ private:
 
     vk::CommandPool commandPool;
 
-    vk::Image depthImage;
-    vk::DeviceMemory depthImageMemory;
-    vk::ImageView depthImageView;
+    FrameBufferAttachment depthAttach;
 
-    vk::Image shadowImage;
-    vk::DeviceMemory shadowImageMemory;
-    vk::ImageView shadowImageView;
+    vk::RenderPass shadowPass;
+    FrameBufferAttachment shadowAttach;
+    std::array<VkImageView, 6> shadowViews;
+    std::array<vk::Framebuffer, 6> shadowBuffers;
+    vk::PipelineLayout shadowPipelineLayout;
+    vk::Pipeline shadowPipeline;
+    vk::DescriptorSet shadowDescriptorSet;
 
     vk::Sampler textureSampler;
 
