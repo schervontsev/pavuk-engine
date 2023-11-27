@@ -69,6 +69,8 @@ void Renderer::InitVulkan() {
     CreateCommandPool();
     CreateDepthResources();
     CreateFramebuffers();
+    CreateShadowmapImage();
+    CreateShadowFramebuffers();
 
     CreateTextureImages();
     CreateTextureImageView();
@@ -448,15 +450,25 @@ void Renderer::CreateRenderPass() {
 }
 
 void Renderer::CreateShadowPass() {
+    vk::AttachmentDescription colorAttachment {};
+    colorAttachment.format = vk::Format::eD32Sfloat;
+    colorAttachment.samples = vk::SampleCountFlagBits::e1;
+    colorAttachment.loadOp =  vk::AttachmentLoadOp::eClear;
+    colorAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
+    colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+    colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+    colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
+    colorAttachment.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
     vk::AttachmentDescription depthAttachment {};
     depthAttachment.format = FindDepthFormat();
     depthAttachment.samples = vk::SampleCountFlagBits::e1;
     depthAttachment.loadOp =  vk::AttachmentLoadOp::eClear;
-    depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
+    depthAttachment.storeOp = vk::AttachmentStoreOp::eStore;
     depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
     depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
     depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
-    depthAttachment.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    depthAttachment.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
     vk::AttachmentReference depthAttachmentRef {};
     depthAttachmentRef.attachment = 0;
@@ -467,7 +479,9 @@ void Renderer::CreateShadowPass() {
     subpass.colorAttachmentCount = 0;
     subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
-    std::array< vk::AttachmentDescription, 1> attachments = {depthAttachment};
+    std::array< vk::AttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
+    
+
     vk::RenderPassCreateInfo renderPassInfo {};
     renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
     renderPassInfo.pAttachments = attachments.data();
@@ -476,7 +490,7 @@ void Renderer::CreateShadowPass() {
     renderPassInfo.dependencyCount = 0;
 
     try {
-        renderPass = device->createRenderPass(renderPassInfo);
+        shadowPass = device->createRenderPass(renderPassInfo);
     } catch (vk::SystemError err) {
         throw std::runtime_error("failed to create render pass!");
     }
@@ -695,7 +709,7 @@ void Renderer::CreateShadowsPipeline(vk::GraphicsPipelineCreateInfo baseInfo) {
             }
     };
 
-
+    baseInfo.pStages = shaderStages;
     baseInfo.layout = shadowPipelineLayout;
     baseInfo.renderPass = shadowPass;
 
@@ -780,6 +794,9 @@ void Renderer::CreateFramebuffers() {
 
 void Renderer::CreateShadowFramebuffers() {
     std::array<vk::ImageView, 2> attachments;
+    for (uint32_t i = 0; i < 6; i++) {
+        attachments[0] = shadowViews[i];
+    }
     attachments[1] = shadowAttach.view;
 
     vk::FramebufferCreateInfo framebufferInfo = {};
@@ -793,9 +810,6 @@ void Renderer::CreateShadowFramebuffers() {
     try {
         for (uint32_t i = 0; i < 6; i++) {
             shadowBuffers[i] = device->createFramebuffer(framebufferInfo);
-            //attachments[0] = shadowCubeMapFaceImageViews[i];
-
-            //VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &offscreenPass.frameBuffers[i]));
         }
         
     } catch (vk::SystemError err) {
@@ -930,7 +944,7 @@ void Renderer::CreateShadowmapImage() {
     viewInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
     viewInfo.subresourceRange.baseMipLevel = 0;
     viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.layerCount = 6;
+    viewInfo.subresourceRange.layerCount = 1;
 
 
     for (uint32_t i = 0; i < 6; i++) {
@@ -1309,6 +1323,27 @@ void Renderer::CreateDescriptorSets() {
         }
         
     }
+
+    //shadows
+    try {
+        auto result = device->allocateDescriptorSets(&allocInfo, &shadowDescriptorSet);
+    } catch (vk::SystemError err) {
+        throw std::runtime_error("failed to allocate shadow descriptor set!");
+    }
+    std::vector<vk::WriteDescriptorSet> shadowWriteDescriptorSets;
+    // Binding 0 : Vertex shader uniform buffer
+    auto writeSet = vk::WriteDescriptorSet {};
+    writeSet.dstSet = descriptorSets[i];
+    writeSet.dstBinding = 1;
+    writeSet.dstArrayElement = 0;
+    writeSet.descriptorType = vk::DescriptorType::eUniformBuffer;
+    writeSet.descriptorCount = (static_cast<uint32_t>(materialSize));
+    writeSet.pImageInfo = imageInfos.data();
+
+    vks::initializers::writeDescriptorSet(descriptorSets.offscreen, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniformBuffers.offscreen.descriptor),
+
+    vkUpdateDescriptorSets(device, offScreenWriteDescriptorSets.size(), offScreenWriteDescriptorSets.data(), 0, NULL);
+}
 }
 
 void Renderer::CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory) {
