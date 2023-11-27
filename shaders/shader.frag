@@ -20,6 +20,8 @@ layout(set = 0, binding = 2) uniform VertexUniformBufferObject {
     LightInfo lights[32];
 } ubo;
 
+layout (binding = 3) uniform samplerCube shadowCubeMap;
+
 vec4 CalcLightResult(vec3 lightPos, vec4 lightCol) {
     vec3 norm = normalize(fragNormal);
     vec3 lightDir = normalize(lightPos - fragWorldPos);

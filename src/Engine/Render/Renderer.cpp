@@ -527,6 +527,14 @@ void Renderer::CreateDescriptorSetLayout() {
     fragUboLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
     bindings.push_back(fragUboLayoutBinding);
 
+    vk::DescriptorSetLayoutBinding fragShadowMapBinding{};
+    fragShadowMapBinding.binding = 3;
+    fragShadowMapBinding.descriptorCount = 1;
+    fragShadowMapBinding.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+    fragShadowMapBinding.pImmutableSamplers = nullptr;
+    fragShadowMapBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
+    bindings.push_back(fragShadowMapBinding);
+
     vk::DescriptorSetLayoutCreateInfo layoutInfo {};
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutInfo.pBindings = bindings.data();
@@ -902,17 +910,17 @@ void Renderer::UpdateShadowCubeFace(uint32_t faceIndex, vk::CommandBuffer comman
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, shadowPipeline);
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, shadowPipelineLayout, 0, 1, &shadowDescriptorSet, 0, nullptr);
 
-    renderSystem->UpdateCommandBufferForShadows(commandBuffer, shadowPipelineLayout);
+    vk::Buffer vertexBuffers[] = { vertexBuffer };
+    vk::DeviceSize offsets[] = { 0 };
+    commandBuffer.bindVertexBuffers(0, 1, vertexBuffers, offsets);
+
+    commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
+
+    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, shadowPipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    renderSystem->UpdateCommandBufferForShadows(commandBuffer, shadowPipelineLayout); //TODO: DRAW
     //models.scene.draw(commandBuffer);
 
     commandBuffer.endRenderPass();
-
-    try {
-        commandBuffer.end();
-    }
-    catch (vk::SystemError) {
-        throw std::runtime_error("failed to record shad command buffer!");
-    }
 }
 
 void Renderer::CreateShadowmapImage() {
@@ -1229,22 +1237,30 @@ void Renderer::CreateUniformBuffers() {
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         CreateBuffer(fragBufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, fragmentUniformBuffers[i], fragmentUniformBuffersMemory[i]);
     }
+
+    vk::DeviceSize shadowBufferSize = sizeof(glm::mat4);
+    CreateBuffer(shadowBufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, shadowUniformBuffer, shadowUniformBufferMemory);
 }
 
 void Renderer::CreateDescriptorPool() {
     size_t materialSize = MaterialManager::Instance()->GetMaterialCount();
-    std::array<vk::DescriptorPoolSize, 3> poolSizes {};
+    std::array<vk::DescriptorPoolSize, 5> poolSizes {};
     poolSizes[0].type = vk::DescriptorType::eUniformBuffer;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     poolSizes[1].type = vk::DescriptorType::eCombinedImageSampler;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * static_cast<uint32_t>(materialSize);
     poolSizes[2].type = vk::DescriptorType::eUniformBuffer;
     poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    //shadow
+    poolSizes[3].type = vk::DescriptorType::eUniformBuffer;
+    poolSizes[3].descriptorCount = 1;
+    poolSizes[4].type = vk::DescriptorType::eCombinedImageSampler;
+    poolSizes[4].descriptorCount = 1;
 
     vk::DescriptorPoolCreateInfo poolInfo {};
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) + 2;
 
     try {
         auto result = device->createDescriptorPool(&poolInfo, nullptr, &descriptorPool);
@@ -1325,25 +1341,47 @@ void Renderer::CreateDescriptorSets() {
     }
 
     //shadows
+
+    vk::DescriptorSetAllocateInfo shadowAllocInfo{};
+    shadowAllocInfo.descriptorPool = descriptorPool;
+    shadowAllocInfo.descriptorSetCount = 1;
+    shadowAllocInfo.pSetLayouts = &descriptorSetLayout;
+
     try {
         auto result = device->allocateDescriptorSets(&allocInfo, &shadowDescriptorSet);
     } catch (vk::SystemError err) {
         throw std::runtime_error("failed to allocate shadow descriptor set!");
     }
-    std::vector<vk::WriteDescriptorSet> shadowWriteDescriptorSets;
-    // Binding 0 : Vertex shader uniform buffer
-    auto writeSet = vk::WriteDescriptorSet {};
-    writeSet.dstSet = descriptorSets[i];
-    writeSet.dstBinding = 1;
-    writeSet.dstArrayElement = 0;
+
+    VertexUniformBufferObject ubo;
+    auto model = glm::mat4(1.0);
+    auto view = glm::mat4(1.0) * model; //TODO: temp
+    auto proj = glm::perspective((float)(glm::pi<float>() / 2.0), 1.0f, 0.f, 100.f);
+    ubo.view_proj = proj * view;
+    //ubo.lightPos = lightPos;
+
+    void* data = device->mapMemory(shadowUniformBufferMemory, vk::DeviceSize(0), sizeof(ubo));
+    memcpy(data, &ubo, sizeof(ubo));
+    device->unmapMemory(shadowUniformBufferMemory);
+
+    vk::DescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = shadowUniformBuffer;
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(glm::mat4);
+
+    auto writeSet = vk::WriteDescriptorSet{};
+    writeSet.dstSet = shadowDescriptorSet;
     writeSet.descriptorType = vk::DescriptorType::eUniformBuffer;
-    writeSet.descriptorCount = (static_cast<uint32_t>(materialSize));
-    writeSet.pImageInfo = imageInfos.data();
-
-    vks::initializers::writeDescriptorSet(descriptorSets.offscreen, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniformBuffers.offscreen.descriptor),
-
-    vkUpdateDescriptorSets(device, offScreenWriteDescriptorSets.size(), offScreenWriteDescriptorSets.data(), 0, NULL);
-}
+    writeSet.dstBinding = 0;
+    writeSet.pBufferInfo = &bufferInfo;
+    writeSet.descriptorCount = 1;
+    std::vector<vk::WriteDescriptorSet> writeSets = { writeSet };
+    try {
+        device->updateDescriptorSets(static_cast<uint32_t>(writeSets.size()), writeSets.data(), 0, nullptr);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to allocate shadow descriptor sets!");
+    }
 }
 
 void Renderer::CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory) {

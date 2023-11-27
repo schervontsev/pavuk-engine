@@ -211,6 +211,8 @@ private:
     FrameBufferAttachment shadowAttach;
     std::array<VkImageView, 6> shadowViews;
     std::array<vk::Framebuffer, 6> shadowBuffers;
+    vk::Buffer shadowUniformBuffer;
+    vk::DeviceMemory shadowUniformBufferMemory;
     vk::PipelineLayout shadowPipelineLayout;
     vk::Pipeline shadowPipeline;
     //vk::Pipeline shadowCubePipeline;
