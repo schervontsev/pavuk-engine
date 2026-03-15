@@ -13,3 +13,9 @@ struct VertexUniformBufferObject {
 struct FragmentUniformBufferObject {
     alignas(16) LightInfo lights[32] = { LightInfo() };
 };
+
+struct ShadowUBOData {
+    alignas(16) glm::mat4 light_view_proj;
+    alignas(16) glm::vec4 light_pos;
+    float far_plane;
+};

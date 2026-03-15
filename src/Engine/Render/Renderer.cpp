@@ -63,22 +63,32 @@ void Renderer::InitVulkan() {
     CreateSwapChain();
     CreateImageViews();
     CreateRenderPass();
+    CreateShadowPass();
     CreateDescriptorSetLayout();
+    CreateShadowDescriptorSetLayout();
+    CreateShadowPipelineLayout();
     CreateGraphicsPipeline();
+    CreateDebugPipeline();
+    CreateShadowPipeline();
     CreateCommandPool();
     CreateDepthResources();
     CreateFramebuffers();
+    CreateShadowmapImage();
+    CreateShadowFramebuffers();
 
     CreateTextureImages();
     CreateTextureImageView();
     CreateTextureSampler();
+    CreateShadowDepthSampler();
 
     CreateUniformBuffers();
+    CreateShadowUniformBuffer();
     CreateDescriptorPool();
     CreateDescriptorSets();
+    CreateShadowDescriptorSet();
     CreateCommandBuffers();
-
     CreateSyncObjects();
+    CreateDebugLightBuffers();
 }
 
 void Renderer::UpdateBuffers()
@@ -125,10 +135,29 @@ void Renderer::Cleanup() {
     device->destroyImage(shadowAttach.image, nullptr);
     device->freeMemory(shadowAttach.mem, nullptr);
 
+    for (uint32_t i = 0; i < 6; i++) {
+        device->destroyFramebuffer(shadowBuffers[i], nullptr);
+        device->destroyImageView(shadowViews[i], nullptr);
+    }
+    device->destroyImageView(shadowCubeMapView, nullptr);
+    device->destroyPipeline(shadowPipeline);
+    device->destroyPipelineLayout(shadowPipelineLayout);
+    device->destroyDescriptorSetLayout(shadowDescriptorSetLayout);
+    for (size_t i = 0; i < shadowUniformBuffers.size(); i++) {
+        device->destroyBuffer(shadowUniformBuffers[i]);
+        device->freeMemory(shadowUniformBuffersMemory[i]);
+    }
+    device->destroyRenderPass(shadowPass);
+
     device->destroyBuffer(vertexBuffer);
     device->destroyBuffer(indexBuffer);
     device->freeMemory(vertexBufferMemory);
     device->freeMemory(indexBufferMemory);
+
+    device->destroyBuffer(debugLightVertexBuffer);
+    device->freeMemory(debugLightVertexBufferMemory);
+    device->destroyBuffer(debugLightIndexBuffer);
+    device->freeMemory(debugLightIndexBufferMemory);
 
     for (auto& buffer : vertexUniformBuffers) {
         device->destroyBuffer(buffer);
@@ -161,8 +190,10 @@ void Renderer::Cleanup() {
     device->destroyRenderPass(renderPass);
     device->destroyDescriptorSetLayout(descriptorSetLayout);
     device->destroySampler(textureSampler);
+    device->destroySampler(shadowDepthSampler);
     device->destroyPipelineLayout(pipelineLayout);
     device->destroyPipeline(graphicsPipeline);
+    device->destroyPipeline(debugPipeline);
     device->destroyPipelineCache(graphicsPipelineCache);
     device->destroyDescriptorPool(descriptorPool);
 
@@ -450,8 +481,8 @@ void Renderer::CreateShadowPass() {
     vk::AttachmentDescription depthAttachment {};
     depthAttachment.format = FindDepthFormat();
     depthAttachment.samples = vk::SampleCountFlagBits::e1;
-    depthAttachment.loadOp =  vk::AttachmentLoadOp::eClear;
-    depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
+    depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    depthAttachment.storeOp = vk::AttachmentStoreOp::eStore;
     depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
     depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
     depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
@@ -475,9 +506,9 @@ void Renderer::CreateShadowPass() {
     renderPassInfo.dependencyCount = 0;
 
     try {
-        renderPass = device->createRenderPass(renderPassInfo);
+        shadowPass = device->createRenderPass(renderPassInfo);
     } catch (vk::SystemError err) {
-        throw std::runtime_error("failed to create render pass!");
+        throw std::runtime_error("failed to create shadow render pass!");
     }
 }
 
@@ -511,6 +542,14 @@ void Renderer::CreateDescriptorSetLayout() {
     fragUboLayoutBinding.pImmutableSamplers = nullptr;
     fragUboLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
     bindings.push_back(fragUboLayoutBinding);
+
+    vk::DescriptorSetLayoutBinding shadowSamplerBinding{};
+    shadowSamplerBinding.binding = 3;
+    shadowSamplerBinding.descriptorCount = 1;
+    shadowSamplerBinding.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+    shadowSamplerBinding.pImmutableSamplers = nullptr;
+    shadowSamplerBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
+    bindings.push_back(shadowSamplerBinding);
 
     vk::DescriptorSetLayoutCreateInfo layoutInfo {};
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -648,6 +687,90 @@ void Renderer::CreateGraphicsPipeline() {
     }
 }
 
+void Renderer::CreateDebugPipeline() {
+    auto vertShaderCode = ReadFile("shaders/debug_vert.spv");
+    auto fragShaderCode = ReadFile("shaders/debug_frag.spv");
+    auto vertShaderModule = CreateShaderModule(vertShaderCode);
+    auto fragShaderModule = CreateShaderModule(fragShaderCode);
+
+    vk::PipelineShaderStageCreateInfo shaderStages[] = {
+        { vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, *vertShaderModule, "main" },
+        { vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, *fragShaderModule, "main" }
+    };
+
+    auto bindingDescription = Vertex::getBindingDescription();
+    auto attributeDescriptions = Vertex::getAttributeDescriptions();
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+
+    vk::PipelineInputAssemblyStateCreateInfo inputAssembly{};
+    inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
+    inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+    vk::PipelineViewportStateCreateInfo viewportState{};
+    viewportState.viewportCount = 1;
+    viewportState.scissorCount = 1;
+
+    vk::PipelineRasterizationStateCreateInfo rasterizer{};
+    rasterizer.depthClampEnable = VK_FALSE;
+    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+    rasterizer.polygonMode = vk::PolygonMode::eFill;
+    rasterizer.lineWidth = 1.0f;
+    rasterizer.cullMode = vk::CullModeFlagBits::eBack;
+    rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
+    rasterizer.depthBiasEnable = VK_FALSE;
+
+    vk::PipelineMultisampleStateCreateInfo multisampling{};
+    multisampling.sampleShadingEnable = VK_FALSE;
+    multisampling.rasterizationSamples = vk::SampleCountFlagBits::e1;
+
+    vk::PipelineDepthStencilStateCreateInfo depthStencil{};
+    depthStencil.depthTestEnable = VK_FALSE;
+    depthStencil.depthWriteEnable = VK_FALSE;
+    depthStencil.depthCompareOp = vk::CompareOp::eLess;
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.stencilTestEnable = VK_FALSE;
+
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment = {};
+    colorBlendAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+    colorBlendAttachment.blendEnable = VK_FALSE;
+
+    vk::PipelineColorBlendStateCreateInfo colorBlending = {};
+    colorBlending.logicOpEnable = VK_FALSE;
+    colorBlending.attachmentCount = 1;
+    colorBlending.pAttachments = &colorBlendAttachment;
+
+    std::vector<vk::DynamicState> dynamicStates = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+    vk::PipelineDynamicStateCreateInfo dynamicState{};
+    dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+    dynamicState.pDynamicStates = dynamicStates.data();
+
+    vk::GraphicsPipelineCreateInfo pipelineInfo{};
+    pipelineInfo.stageCount = 2;
+    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.pVertexInputState = &vertexInputInfo;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    pipelineInfo.pViewportState = &viewportState;
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState = &multisampling;
+    pipelineInfo.pDepthStencilState = &depthStencil;
+    pipelineInfo.pColorBlendState = &colorBlending;
+    pipelineInfo.pDynamicState = &dynamicState;
+    pipelineInfo.layout = pipelineLayout;
+    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.subpass = 0;
+
+    try {
+        auto result = device->createGraphicsPipeline(nullptr, pipelineInfo);
+        debugPipeline = result.value;
+    } catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create debug pipeline!");
+    }
+}
+
 void Renderer::CreateFramebuffers() {
     swapChainFramebuffers.resize(swapChainImageViews.size());
 
@@ -674,27 +797,180 @@ void Renderer::CreateFramebuffers() {
 }
 
 void Renderer::CreateShadowFramebuffers() {
-    std::array<vk::ImageView, 2> attachments;
-    attachments[1] = shadowAttach.view;
-
     vk::FramebufferCreateInfo framebufferInfo = {};
     framebufferInfo.renderPass = shadowPass;
-    framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-    framebufferInfo.pAttachments = attachments.data();
     framebufferInfo.width = SHADOW_WIDTH;
     framebufferInfo.height = SHADOW_HEIGHT;
     framebufferInfo.layers = 1;
 
     try {
         for (uint32_t i = 0; i < 6; i++) {
+            framebufferInfo.attachmentCount = 1;
+            framebufferInfo.pAttachments = &shadowViews[i];
             shadowBuffers[i] = device->createFramebuffer(framebufferInfo);
-            //attachments[0] = shadowCubeMapFaceImageViews[i];
-
-            //VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &offscreenPass.frameBuffers[i]));
         }
-        
     } catch (vk::SystemError err) {
-        throw std::runtime_error("failed to create framebuffer!");
+        throw std::runtime_error("failed to create shadow framebuffers!");
+    }
+}
+
+void Renderer::CreateShadowDescriptorSetLayout() {
+    vk::DescriptorSetLayoutBinding uboBinding{};
+    uboBinding.binding = 0;
+    uboBinding.descriptorCount = 1;
+    uboBinding.descriptorType = vk::DescriptorType::eUniformBuffer;
+    uboBinding.stageFlags = vk::ShaderStageFlagBits::eVertex;
+
+    vk::DescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &uboBinding;
+
+    try {
+        shadowDescriptorSetLayout = device->createDescriptorSetLayout(layoutInfo);
+    } catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create shadow descriptor set layout!");
+    }
+}
+
+void Renderer::CreateShadowPipelineLayout() {
+    vk::PushConstantRange pushConstant{};
+    pushConstant.offset = 0;
+    pushConstant.size = sizeof(MeshPushConstants);
+    pushConstant.stageFlags = vk::ShaderStageFlagBits::eVertex;
+
+    vk::PipelineLayoutCreateInfo layoutInfo{};
+    layoutInfo.setLayoutCount = 1;
+    layoutInfo.pSetLayouts = &shadowDescriptorSetLayout;
+    layoutInfo.pushConstantRangeCount = 1;
+    layoutInfo.pPushConstantRanges = &pushConstant;
+
+    try {
+        shadowPipelineLayout = device->createPipelineLayout(layoutInfo);
+    } catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create shadow pipeline layout!");
+    }
+}
+
+void Renderer::CreateShadowUniformBuffer() {
+    shadowUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    shadowUniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        CreateBuffer(sizeof(ShadowUBOData), vk::BufferUsageFlagBits::eUniformBuffer,
+            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+            shadowUniformBuffers[i], shadowUniformBuffersMemory[i]);
+    }
+}
+
+void Renderer::CreateShadowPipeline() {
+    auto vertShaderCode = ReadFile("shaders/shadow_vert.spv");
+    auto fragShaderCode = ReadFile("shaders/shadow_frag.spv");
+
+    auto vertShaderModule = CreateShaderModule(vertShaderCode);
+    auto fragShaderModule = CreateShaderModule(fragShaderCode);
+
+    vk::PipelineShaderStageCreateInfo shaderStages[] = {
+        { vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, *vertShaderModule, "main" },
+        { vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, *fragShaderModule, "main" }
+    };
+
+    auto bindingDescription = Vertex::getBindingDescription();
+    auto attributeDescriptions = Vertex::getAttributeDescriptions();
+
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+
+    vk::PipelineInputAssemblyStateCreateInfo inputAssembly{};
+    inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
+    inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+    vk::PipelineViewportStateCreateInfo viewportState{};
+    viewportState.viewportCount = 1;
+    viewportState.scissorCount = 1;
+
+    vk::PipelineRasterizationStateCreateInfo rasterizer{};
+    rasterizer.depthClampEnable = VK_FALSE;
+    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+    rasterizer.polygonMode = vk::PolygonMode::eFill;
+    rasterizer.lineWidth = 1.0f;
+    rasterizer.cullMode = vk::CullModeFlagBits::eBack;
+    rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
+    rasterizer.depthBiasEnable = VK_FALSE;
+
+    vk::PipelineMultisampleStateCreateInfo multisampling{};
+    multisampling.sampleShadingEnable = VK_FALSE;
+    multisampling.rasterizationSamples = vk::SampleCountFlagBits::e1;
+
+    vk::PipelineDepthStencilStateCreateInfo depthStencil{};
+    depthStencil.depthTestEnable = VK_TRUE;
+    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthCompareOp = vk::CompareOp::eLess;
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.stencilTestEnable = VK_FALSE;
+
+    vk::PipelineColorBlendStateCreateInfo colorBlending{};
+    colorBlending.logicOpEnable = VK_FALSE;
+    colorBlending.attachmentCount = 0;
+
+    std::vector<vk::DynamicState> dynamicStates = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+    vk::PipelineDynamicStateCreateInfo dynamicState{};
+    dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+    dynamicState.pDynamicStates = dynamicStates.data();
+
+    vk::GraphicsPipelineCreateInfo pipelineInfo{};
+    pipelineInfo.stageCount = 2;
+    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.pVertexInputState = &vertexInputInfo;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    pipelineInfo.pViewportState = &viewportState;
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState = &multisampling;
+    pipelineInfo.pDepthStencilState = &depthStencil;
+    pipelineInfo.pColorBlendState = &colorBlending;
+    pipelineInfo.pDynamicState = &dynamicState;
+    pipelineInfo.layout = shadowPipelineLayout;
+    pipelineInfo.renderPass = shadowPass;
+    pipelineInfo.subpass = 0;
+
+    try {
+        auto result = device->createGraphicsPipeline(nullptr, pipelineInfo);
+        shadowPipeline = result.value;
+    } catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create shadow pipeline!");
+    }
+}
+
+void Renderer::CreateShadowDescriptorSet() {
+    std::vector<vk::DescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, shadowDescriptorSetLayout);
+    vk::DescriptorSetAllocateInfo allocInfo{};
+    allocInfo.descriptorPool = descriptorPool;
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    allocInfo.pSetLayouts = layouts.data();
+
+    shadowDescriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+    try {
+        shadowDescriptorSets = device->allocateDescriptorSets(allocInfo);
+    } catch (vk::SystemError err) {
+        throw std::runtime_error("failed to allocate shadow descriptor sets!");
+    }
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        vk::DescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = shadowUniformBuffers[i];
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(ShadowUBOData);
+
+        vk::WriteDescriptorSet write{};
+        write.dstSet = shadowDescriptorSets[i];
+        write.dstBinding = 0;
+        write.dstArrayElement = 0;
+        write.descriptorType = vk::DescriptorType::eUniformBuffer;
+        write.descriptorCount = 1;
+        write.pBufferInfo = &bufferInfo;
+
+        device->updateDescriptorSets(1, &write, 0, nullptr);
     }
 }
 
@@ -735,69 +1011,61 @@ void Renderer::CreateDepthResources() {
 
 void Renderer::UpdateShadowCubeFace(uint32_t faceIndex, vk::CommandBuffer commandBuffer)
 {
-    vk::ClearValue clearValues[2];
-    clearValues[0].color = vk::ClearColorValue(std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f });
-    clearValues[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+    glm::vec3 lightPos = updateLightSystem ? updateLightSystem->GetFirstLightPosition() : glm::vec3(0.0f, 0.0f, 0.0f);
+
+    glm::vec3 direction;
+    glm::vec3 up;
+    switch (faceIndex) {
+    case 0: direction = glm::vec3(1.0f, 0.0f, 0.0f);  up = glm::vec3(0.0f, -1.0f, 0.0f);  break;
+    case 1: direction = glm::vec3(-1.0f, 0.0f, 0.0f); up = glm::vec3(0.0f, -1.0f, 0.0f);  break;
+    case 2: direction = glm::vec3(0.0f, 1.0f, 0.0f); up = glm::vec3(0.0f, 0.0f, 1.0f);  break;
+    case 3: direction = glm::vec3(0.0f, -1.0f, 0.0f); up = glm::vec3(0.0f, 0.0f, -1.0f); break;
+    case 4: direction = glm::vec3(0.0f, 0.0f, 1.0f); up = glm::vec3(0.0f, -1.0f, 0.0f);  break;
+    case 5: direction = glm::vec3(0.0f, 0.0f, -1.0f); up = glm::vec3(0.0f, -1.0f, 0.0f);  break;
+    default: direction = glm::vec3(0.0f, 0.0f, 1.0f); up = glm::vec3(0.0f, 1.0f, 0.0f); break;
+    }
+
+    glm::mat4 view = glm::lookAt(lightPos, lightPos + direction, up);
+    const float shadowNear = 0.1f;
+    const float shadowFar = 100.0f;
+    glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1.0f, shadowNear, shadowFar);
+    glm::mat4 lightViewProj = proj * view;
+
+    ShadowUBOData shadowUbo{};
+    shadowUbo.light_view_proj = lightViewProj;
+    shadowUbo.light_pos = glm::vec4(lightPos, 1.0f);
+    shadowUbo.far_plane = shadowFar;
+
+    void* data = device->mapMemory(shadowUniformBuffersMemory[currentFrame], 0, sizeof(ShadowUBOData));
+    memcpy(data, &shadowUbo, sizeof(ShadowUBOData));
+    device->unmapMemory(shadowUniformBuffersMemory[currentFrame]);
+
+    vk::ClearValue clearDepth;
+    clearDepth.depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
     vk::RenderPassBeginInfo renderPassBeginInfo{};
     renderPassBeginInfo.renderPass = shadowPass;
     renderPassBeginInfo.framebuffer = shadowBuffers[faceIndex];
     renderPassBeginInfo.renderArea.extent.width = SHADOW_WIDTH;
     renderPassBeginInfo.renderArea.extent.height = SHADOW_HEIGHT;
-    renderPassBeginInfo.clearValueCount = 2;
-    renderPassBeginInfo.pClearValues = clearValues;
+    renderPassBeginInfo.clearValueCount = 1;
+    renderPassBeginInfo.pClearValues = &clearDepth;
 
-    // Update view matrix via push constant
-
-    glm::mat4 viewMatrix = glm::mat4(1.0f);
-    switch (faceIndex) {
-    case 0: // POSITIVE_X
-        viewMatrix = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        break;
-    case 1:	// NEGATIVE_X
-        viewMatrix = glm::rotate(viewMatrix, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        break;
-    case 2:	// POSITIVE_Y
-        viewMatrix = glm::rotate(viewMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        break;
-    case 3:	// NEGATIVE_Y
-        viewMatrix = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        break;
-    case 4:	// POSITIVE_Z
-        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        break;
-    case 5:	// NEGATIVE_Z
-        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        break;
-    }
-
-    // Render scene from cube face's point of view
     commandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
-    // Update shader push constant block
-    // Contains current face view matrix
-
-    vk::PushConstantRange push_constant;
-    push_constant.offset = 0;
-    push_constant.size = sizeof(glm::mat4);
-    push_constant.stageFlags = vk::ShaderStageFlagBits::eVertex;
-
-    //vkCmdPushConstants(
-    //    commandBuffer,
-    //    shadowPipelineLayout,
-    //    VK_SHADER_STAGE_VERTEX_BIT,
-    //    0,
-    //    sizeof(glm::mat4),
-    //    &viewMatrix);
-
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, shadowPipeline);
-    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, shadowPipelineLayout, 0, 1, &shadowDescriptorSet, 0, nullptr);
+    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, shadowPipelineLayout, 0, 1, &shadowDescriptorSets[currentFrame], 0, nullptr);
 
-    //models.scene.draw(commandBuffer);
+    vk::Buffer vertexBuffers[] = { vertexBuffer };
+    vk::DeviceSize offsets[] = { 0 };
+    commandBuffer.bindVertexBuffers(0, 1, vertexBuffers, offsets);
+    commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
 
-    vkCmdEndRenderPass(commandBuffer);
+    if (renderSystem) {
+        renderSystem->UpdateCommandBuffer(commandBuffer, shadowPipelineLayout);
+    }
+
+    commandBuffer.endRenderPass();
 }
 
 void Renderer::CreateShadowmapImage() {
@@ -829,8 +1097,7 @@ void Renderer::CreateShadowmapImage() {
     viewInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
     viewInfo.subresourceRange.baseMipLevel = 0;
     viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.layerCount = 6;
-
+    viewInfo.subresourceRange.layerCount = 1;
 
     for (uint32_t i = 0; i < 6; i++) {
         viewInfo.subresourceRange.baseArrayLayer = i;
@@ -839,6 +1106,45 @@ void Renderer::CreateShadowmapImage() {
         } catch (vk::SystemError err) {
             throw std::runtime_error("failed to create shadow image views!");
         }
+    }
+
+    vk::ImageViewCreateInfo cubeViewInfo{};
+    cubeViewInfo.image = shadowAttach.image;
+    cubeViewInfo.viewType = vk::ImageViewType::eCube;
+    cubeViewInfo.format = vk::Format::eD32Sfloat;
+    cubeViewInfo.components = vk::ComponentMapping();
+    cubeViewInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
+    cubeViewInfo.subresourceRange.baseMipLevel = 0;
+    cubeViewInfo.subresourceRange.levelCount = 1;
+    cubeViewInfo.subresourceRange.baseArrayLayer = 0;
+    cubeViewInfo.subresourceRange.layerCount = 6;
+    try {
+        shadowCubeMapView = device->createImageView(cubeViewInfo);
+    } catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create shadow cube map view!");
+    }
+}
+
+void Renderer::CreateShadowDepthSampler() {
+    vk::SamplerCreateInfo samplerInfo{};
+    samplerInfo.magFilter = vk::Filter::eLinear;
+    samplerInfo.minFilter = vk::Filter::eLinear;
+    samplerInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+    samplerInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
+    samplerInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
+    samplerInfo.anisotropyEnable = VK_FALSE;
+    samplerInfo.borderColor = vk::BorderColor::eFloatOpaqueWhite;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_TRUE;
+    samplerInfo.compareOp = vk::CompareOp::eLessOrEqual;
+    samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 0.0f;
+    try {
+        shadowDepthSampler = device->createSampler(samplerInfo);
+    } catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create shadow depth sampler!");
     }
 }
 
@@ -1096,6 +1402,67 @@ void Renderer::CreateIndexBuffer(const std::vector<uint32_t>& indices) {
     device->freeMemory(stagingBufferMemory);
 }
 
+void Renderer::CreateDebugLightBuffers() {
+    const glm::vec3 color(1.0f, 1.0f, 0.0f);
+    const glm::vec2 uv(0.0f, 0.0f);
+    const int texIndex = 0;
+    std::vector<Vertex> vertices = {
+        { {-0.5f,-0.5f, 0.5f}, color, uv, { 0.0f, 0.0f, 1.0f}, texIndex },
+        { { 0.5f,-0.5f, 0.5f}, color, uv, { 0.0f, 0.0f, 1.0f}, texIndex },
+        { { 0.5f, 0.5f, 0.5f}, color, uv, { 0.0f, 0.0f, 1.0f}, texIndex },
+        { {-0.5f, 0.5f, 0.5f}, color, uv, { 0.0f, 0.0f, 1.0f}, texIndex },
+        { { 0.5f,-0.5f,-0.5f}, color, uv, { 0.0f, 0.0f,-1.0f}, texIndex },
+        { {-0.5f,-0.5f,-0.5f}, color, uv, { 0.0f, 0.0f,-1.0f}, texIndex },
+        { {-0.5f, 0.5f,-0.5f}, color, uv, { 0.0f, 0.0f,-1.0f}, texIndex },
+        { { 0.5f, 0.5f,-0.5f}, color, uv, { 0.0f, 0.0f,-1.0f}, texIndex },
+        { { 0.5f,-0.5f, 0.5f}, color, uv, { 1.0f, 0.0f, 0.0f}, texIndex },
+        { { 0.5f,-0.5f,-0.5f}, color, uv, { 1.0f, 0.0f, 0.0f}, texIndex },
+        { { 0.5f, 0.5f,-0.5f}, color, uv, { 1.0f, 0.0f, 0.0f}, texIndex },
+        { { 0.5f, 0.5f, 0.5f}, color, uv, { 1.0f, 0.0f, 0.0f}, texIndex },
+        { {-0.5f,-0.5f,-0.5f}, color, uv, {-1.0f, 0.0f, 0.0f}, texIndex },
+        { {-0.5f,-0.5f, 0.5f}, color, uv, {-1.0f, 0.0f, 0.0f}, texIndex },
+        { {-0.5f, 0.5f, 0.5f}, color, uv, {-1.0f, 0.0f, 0.0f}, texIndex },
+        { {-0.5f, 0.5f,-0.5f}, color, uv, {-1.0f, 0.0f, 0.0f}, texIndex },
+        { {-0.5f, 0.5f, 0.5f}, color, uv, { 0.0f, 1.0f, 0.0f}, texIndex },
+        { { 0.5f, 0.5f, 0.5f}, color, uv, { 0.0f, 1.0f, 0.0f}, texIndex },
+        { { 0.5f, 0.5f,-0.5f}, color, uv, { 0.0f, 1.0f, 0.0f}, texIndex },
+        { {-0.5f, 0.5f,-0.5f}, color, uv, { 0.0f, 1.0f, 0.0f}, texIndex },
+        { {-0.5f,-0.5f,-0.5f}, color, uv, { 0.0f,-1.0f, 0.0f}, texIndex },
+        { { 0.5f,-0.5f,-0.5f}, color, uv, { 0.0f,-1.0f, 0.0f}, texIndex },
+        { { 0.5f,-0.5f, 0.5f}, color, uv, { 0.0f,-1.0f, 0.0f}, texIndex },
+        { {-0.5f,-0.5f, 0.5f}, color, uv, { 0.0f,-1.0f, 0.0f}, texIndex },
+    };
+    std::vector<uint32_t> indices = {
+        0,1,2, 0,2,3, 4,5,6, 4,6,7, 8,9,10, 8,10,11,
+        12,13,14, 12,14,15, 16,17,18, 16,18,19, 20,21,22, 20,22,23
+    };
+    debugLightIndexCount = static_cast<uint32_t>(indices.size());
+
+    vk::DeviceSize vertexBufferSize = sizeof(vertices[0]) * vertices.size();
+    vk::Buffer stagingVertexBuffer;
+    vk::DeviceMemory stagingVertexBufferMemory;
+    CreateBuffer(vertexBufferSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, stagingVertexBuffer, stagingVertexBufferMemory);
+    void* vertexData = device->mapMemory(stagingVertexBufferMemory, 0, vertexBufferSize);
+    memcpy(vertexData, vertices.data(), static_cast<size_t>(vertexBufferSize));
+    device->unmapMemory(stagingVertexBufferMemory);
+    CreateBuffer(vertexBufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, debugLightVertexBuffer, debugLightVertexBufferMemory);
+    CopyBuffer(stagingVertexBuffer, debugLightVertexBuffer, vertexBufferSize);
+    device->destroyBuffer(stagingVertexBuffer);
+    device->freeMemory(stagingVertexBufferMemory);
+
+    vk::DeviceSize indexBufferSize = sizeof(indices[0]) * indices.size();
+    vk::Buffer stagingIndexBuffer;
+    vk::DeviceMemory stagingIndexBufferMemory;
+    CreateBuffer(indexBufferSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, stagingIndexBuffer, stagingIndexBufferMemory);
+    void* indexData = device->mapMemory(stagingIndexBufferMemory, 0, indexBufferSize);
+    memcpy(indexData, indices.data(), static_cast<size_t>(indexBufferSize));
+    device->unmapMemory(stagingIndexBufferMemory);
+    CreateBuffer(indexBufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, debugLightIndexBuffer, debugLightIndexBufferMemory);
+    CopyBuffer(stagingIndexBuffer, debugLightIndexBuffer, indexBufferSize);
+    device->destroyBuffer(stagingIndexBuffer);
+    device->freeMemory(stagingIndexBufferMemory);
+}
+
 void Renderer::CreateUniformBuffers() {
     vk::DeviceSize bufferSize = sizeof(VertexUniformBufferObject);
 
@@ -1118,18 +1485,22 @@ void Renderer::CreateUniformBuffers() {
 
 void Renderer::CreateDescriptorPool() {
     size_t materialSize = MaterialManager::Instance()->GetMaterialCount();
-    std::array<vk::DescriptorPoolSize, 3> poolSizes {};
+    std::array<vk::DescriptorPoolSize, 5> poolSizes {};
     poolSizes[0].type = vk::DescriptorType::eUniformBuffer;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     poolSizes[1].type = vk::DescriptorType::eCombinedImageSampler;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * static_cast<uint32_t>(materialSize);
     poolSizes[2].type = vk::DescriptorType::eUniformBuffer;
     poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolSizes[3].type = vk::DescriptorType::eUniformBuffer;
+    poolSizes[3].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolSizes[4].type = vk::DescriptorType::eCombinedImageSampler;
+    poolSizes[4].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     vk::DescriptorPoolCreateInfo poolInfo {};
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * 2;
 
     try {
         auto result = device->createDescriptorPool(&poolInfo, nullptr, &descriptorPool);
@@ -1200,6 +1571,19 @@ void Renderer::CreateDescriptorSets() {
         fragUniformSet.descriptorCount = 1;
         fragUniformSet.pBufferInfo = &fragbufferInfo;
         descriptorWrites.push_back(fragUniformSet);
+
+        vk::DescriptorImageInfo shadowImageInfo{};
+        shadowImageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+        shadowImageInfo.imageView = shadowCubeMapView;
+        shadowImageInfo.sampler = shadowDepthSampler;
+        auto shadowSamplerSet = vk::WriteDescriptorSet{};
+        shadowSamplerSet.dstSet = descriptorSets[i];
+        shadowSamplerSet.dstBinding = 3;
+        shadowSamplerSet.dstArrayElement = 0;
+        shadowSamplerSet.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+        shadowSamplerSet.descriptorCount = 1;
+        shadowSamplerSet.pImageInfo = &shadowImageInfo;
+        descriptorWrites.push_back(shadowSamplerSet);
 
         try {
             device->updateDescriptorSets(static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -1332,8 +1716,27 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
         commandBuffer.setScissor(0, 1, &scissor);
 
         for (uint32_t face = 0; face < 6; face++) {
-            //UpdateShadowCubeFace(face, commandBuffer);
+            UpdateShadowCubeFace(face, commandBuffer);
         }
+
+        vk::ImageMemoryBarrier shadowBarrier{};
+        shadowBarrier.oldLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+        shadowBarrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+        shadowBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        shadowBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        shadowBarrier.image = shadowAttach.image;
+        shadowBarrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
+        shadowBarrier.subresourceRange.baseMipLevel = 0;
+        shadowBarrier.subresourceRange.levelCount = 1;
+        shadowBarrier.subresourceRange.baseArrayLayer = 0;
+        shadowBarrier.subresourceRange.layerCount = 6;
+        shadowBarrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+        shadowBarrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+        commandBuffer.pipelineBarrier(
+            vk::PipelineStageFlagBits::eLateFragmentTests,
+            vk::PipelineStageFlagBits::eFragmentShader,
+            vk::DependencyFlags(),
+            0, nullptr, 0, nullptr, 1, &shadowBarrier);
     }
 
     vk::RenderPassBeginInfo renderPassInfo {};
@@ -1378,6 +1781,24 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
     renderSystem->UpdateCommandBuffer(commandBuffer, pipelineLayout);
+
+    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, debugPipeline);
+    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    vk::Buffer debugVertexBuffers[] = { debugLightVertexBuffer };
+    vk::DeviceSize debugOffsets[] = { 0 };
+    commandBuffer.bindVertexBuffers(0, 1, debugVertexBuffers, debugOffsets);
+    commandBuffer.bindIndexBuffer(debugLightIndexBuffer, 0, vk::IndexType::eUint32);
+
+    if (updateLightSystem) {
+        glm::vec3 lightPos = updateLightSystem->GetFirstLightPosition();
+        const float debugMarkerScale = 0.05f;
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(debugMarkerScale));
+        MeshPushConstants debugPushConstants{};
+        debugPushConstants.transform = model;
+        debugPushConstants.normal_matrix = glm::transpose(glm::inverse(model));
+        commandBuffer.pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(MeshPushConstants), &debugPushConstants);
+        commandBuffer.drawIndexed(debugLightIndexCount, 1, 0, 0, 0);
+    }
 
     commandBuffer.endRenderPass();
 

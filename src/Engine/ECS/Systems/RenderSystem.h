@@ -1,5 +1,7 @@
 #pragma once
 #include "System.h"
+#include <glm/glm.hpp>
+#include <string>
 
 namespace vk
 {
@@ -19,5 +21,6 @@ public:
     std::vector<Vertex> GetVertices();
 	std::vector<uint32_t> GetIndices();
 
+	bool GetFirstEntityPositionByMesh(const std::string& meshName, glm::vec3& outPos) const;
 };
 

@@ -71,3 +71,16 @@ std::vector<uint32_t> RenderSystem::GetIndices()
 	}
 	return result;
 }
+
+bool RenderSystem::GetFirstEntityPositionByMesh(const std::string& meshName, glm::vec3& outPos) const
+{
+	for (auto const& entity : entities) {
+		auto& render = ecsManager.GetComponent<RenderComponent>(entity);
+		if (render.meshName == meshName) {
+			auto& transform = ecsManager.GetComponent<TransformComponent>(entity);
+			outPos = transform.translation;
+			return true;
+		}
+	}
+	return false;
+}

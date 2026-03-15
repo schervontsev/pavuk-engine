@@ -20,3 +20,12 @@ void UpdateLightSystem::UpdateLightInUBO(FragmentUniformBufferObject& ubo)
 		}
 	}
 }
+
+glm::vec3 UpdateLightSystem::GetFirstLightPosition() const
+{
+	for (auto const& entity : entities) {
+		auto& transform = ecsManager.GetComponent<TransformComponent>(entity);
+		return transform.translation;
+	}
+	return glm::vec3(0.0f, 0.0f, 0.0f);
+}

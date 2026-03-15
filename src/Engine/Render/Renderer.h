@@ -96,7 +96,13 @@ private:
     void CreateSurface();
     void CreateRenderPass();
     void CreateShadowPass();
+    void CreateShadowDescriptorSetLayout();
+    void CreateShadowPipelineLayout();
+    void CreateShadowUniformBuffer();
+    void CreateShadowPipeline();
+    void CreateShadowDescriptorSet();
     void CreateGraphicsPipeline();
+    void CreateDebugPipeline();
     void CreateFramebuffers();
     void CreateShadowFramebuffers();
     void CreateCommandPool();
@@ -116,6 +122,7 @@ private:
     void CreateImageViews();
     void CreateTextureImageView();
     void CreateTextureSampler();
+    void CreateShadowDepthSampler();
     vk::ImageView CreateImageView(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags);
     void CreateImage(vk::ImageCreateInfo imageInfo, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory);
     
@@ -124,6 +131,7 @@ private:
 
     void CreateVertexBuffer(const std::vector<Vertex>& vertices);
     void CreateIndexBuffer(const std::vector<uint32_t>& indices);
+    void CreateDebugLightBuffers();
     void CreateUniformBuffers();
     void UpdateUniformBuffer(uint32_t currentImage);
     void CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
@@ -199,6 +207,7 @@ private:
 
     vk::PipelineLayout pipelineLayout;
     vk::Pipeline graphicsPipeline;
+    vk::Pipeline debugPipeline;
     vk::PipelineCache graphicsPipelineCache;
     vk::DescriptorSetLayout descriptorSetLayout;
 
@@ -208,11 +217,16 @@ private:
 
     vk::RenderPass shadowPass;
     FrameBufferAttachment shadowAttach;
-    std::array<VkImageView, 6> shadowViews;
+    std::array<vk::ImageView, 6> shadowViews;
+    vk::ImageView shadowCubeMapView;
     std::array<vk::Framebuffer, 6> shadowBuffers;
+    vk::Sampler shadowDepthSampler;
+    vk::DescriptorSetLayout shadowDescriptorSetLayout;
     vk::PipelineLayout shadowPipelineLayout;
     vk::Pipeline shadowPipeline;
-    vk::DescriptorSet shadowDescriptorSet;
+    std::vector<vk::DescriptorSet> shadowDescriptorSets;
+    std::vector<vk::Buffer> shadowUniformBuffers;
+    std::vector<vk::DeviceMemory> shadowUniformBuffersMemory;
 
     vk::Sampler textureSampler;
 
@@ -220,6 +234,12 @@ private:
     vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;
     vk::DeviceMemory indexBufferMemory;
+
+    vk::Buffer debugLightVertexBuffer;
+    vk::DeviceMemory debugLightVertexBufferMemory;
+    vk::Buffer debugLightIndexBuffer;
+    vk::DeviceMemory debugLightIndexBufferMemory;
+    uint32_t debugLightIndexCount;
 
     std::vector<vk::Buffer> vertexUniformBuffers;
     std::vector<vk::DeviceMemory> vertexUniformBuffersMemory;

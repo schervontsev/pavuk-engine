@@ -49,7 +49,7 @@ void Scene::Init()
 
 	//lights
 
-	if (true) {
+	if (false) {
 		auto light = ecsManager.CreateEntity();
 		ecsManager.AddComponent(light, PointLightComponent({ glm::vec4(0.0, 0.0, 1.0, 1.0) }));
 		TransformComponent transform;
@@ -60,12 +60,12 @@ void Scene::Init()
 		auto light = ecsManager.CreateEntity();
 		ecsManager.AddComponent(light, PointLightComponent({ glm::vec4(1.0, 0.5, 0.0, 1.0) }));
 		TransformComponent transform;
-		transform.translation = glm::vec3(-10.0, -0.2, 0.0);
+		transform.translation = glm::vec3(1.0, 1.0, -2.0);
 		ecsManager.AddComponent(light, transform);
 	}
-	if (true) {
+	if (false) {
 		auto light1 = ecsManager.CreateEntity();
-		ecsManager.AddComponent(light1, PointLightComponent({ glm::vec4(0.0, 0.2, 0.0, 1.0) }));
+		ecsManager.AddComponent(light1, PointLightComponent({ glm::vec4(1.0, 1.0, 1.0, 1.0) }));
 		TransformComponent transform;
 		transform.translation = glm::vec3(0.0, -0.2, 2.0);
 		ecsManager.AddComponent(light1, transform);
