@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Pavuk (Release, build/)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Release/Pavuk.exe",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Pavuk (Debug, build/)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Debug/Pavuk.exe",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "CMake: build Debug"
+    },
+    {
+      "name": "Pavuk (x64-Debug, CMake Tools)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/out/build/x64-debug/Pavuk.exe",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

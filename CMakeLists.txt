@@ -1,71 +1,76 @@
-﻿# CMakeList.txt : CMake project for pavuk_engine, include source and define
-# project specific logic here.
-#
-cmake_minimum_required (VERSION 3.8)
-
-# Enable Hot Reload for MSVC compilers if supported.
-if (POLICY CMP0141)
-  cmake_policy(SET CMP0141 NEW)
-  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-endif()
-
-project ("pavuk_engine")
-
-# Use FindVulkan module added with CMAKE 3.7
-if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
-	message(STATUS "Using module to find Vulkan")
-	find_package(Vulkan)
-endif()
-
-
-IF (NOT Vulkan_FOUND)
-	message(FATAL_ERROR "Could not find Vulkan library!")
-ELSE()
-	message(STATUS ${Vulkan_LIBRARY})
-ENDIF()
+cmake_minimum_required(VERSION 3.16)
+project(Pavuk LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-IF(WIN32)
-	# Nothing here (yet)
-ELSEIF(APPLE)
-	link_libraries(${Vulkan_LIBRARY} "-framework AppKit" "-framework QuartzCore")
-ELSE(WIN32)
-	link_libraries(${XCB_LIBRARIES} ${Vulkan_LIBRARY} ${Vulkan_LIBRARY} ${DIRECTFB_LIBRARIES} ${WAYLAND_CLIENT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-ENDIF(WIN32)
+# Sources (from Pavuk.vcxproj)
+set(PAVUK_SOURCES
+    src/main.cpp
+    src/Scene/Scene.cpp
+    src/Engine/Game.cpp
+    src/Engine/Render/Renderer.cpp
+    src/Engine/Render/Vertex.cpp
+    src/Engine/ECS/ECSManager.cpp
+    src/Engine/ECS/ComponentMap.cpp
+    src/Engine/ECS/EntityManager.cpp
+    src/Engine/ECS/ComponentManager.cpp
+    src/Engine/ECS/SystemManager.cpp
+    src/Engine/ECS/Systems/System.cpp
+    src/Engine/ECS/Systems/RenderSystem.cpp
+    src/Engine/ECS/Systems/UpdateTransformSystem.cpp
+    src/Engine/ECS/Systems/UpdateVisibilitySystem.cpp
+    src/Engine/ECS/Systems/UpdateLightSystem.cpp
+    src/Engine/ECS/Systems/RotateSystem.cpp
+    src/Engine/ECS/Systems/SetInputSystem.cpp
+    src/Engine/ECS/Systems/SimpleControllerSystem.cpp
+    src/Engine/ECS/Systems/TestSystem.cpp
+    src/Engine/ECS/Components/TransformComponent.cpp
+    src/Engine/ResourceManagers/MeshManager.cpp
+    src/Engine/ResourceManagers/MaterialManager.cpp
+    src/Engine/Input/InputManager.cpp
+)
 
-# Create an empty list to store source files
-set(SOURCE_FILES "")
+# Vulkan
+find_package(Vulkan REQUIRED)
 
-# Add all .cpp files in the src directory to the list
-file(GLOB_RECURSE SRC_FILES "src/*.cpp")
-
-# Add all .hpp files in the include directory to the list
-file(GLOB_RECURSE HDR_FILES "src/*.h")
-file(GLOB_RECURSE INC_FILES "include/*.h")
-
-# Create the executable or library target
-add_executable(pavuk_engine ${SRC_FILES} ${HDR_FILES} ${INC_FILES})
-
-# Include the 'include' directory
-target_include_directories(pavuk_engine PRIVATE ${Vulkan_INCLUDE_DIRS})
-target_include_directories(pavuk_engine PRIVATE ${PROJECT_SOURCE_DIR}/glfw/include)
-target_include_directories(pavuk_engine PRIVATE ${PROJECT_SOURCE_DIR}/include)
-
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(BUILD_SHARED_LIBS ON)
-
+# GLFW (submodule)
 add_subdirectory(glfw)
 
-target_link_libraries (pavuk_engine glfw)
-target_link_libraries (pavuk_engine Vulkan::Vulkan)
-
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET pavuk_engine PROPERTY CXX_STANDARD 17)
+# GLM: try find_package first, then FetchContent
+find_package(glm QUIET)
+if(NOT glm_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG 1.0.1
+    )
+    set(GLM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLM_BUILD_INFO OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(glm)
 endif()
 
-set_property(TARGET pavuk_engine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-message(${CMAKE_SOURCE_DIR})
+# Executable
+add_executable(Pavuk ${PAVUK_SOURCES})
+
+target_include_directories(Pavuk PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(Pavuk PRIVATE Vulkan::Vulkan glfw)
+
+# GLM: find_package provides glm::glm, FetchContent may provide glm
+if(TARGET glm::glm)
+    target_link_libraries(Pavuk PRIVATE glm::glm)
+elseif(TARGET glm)
+    target_link_libraries(Pavuk PRIVATE glm)
+else()
+    message(FATAL_ERROR "GLM target not found")
+endif()
+
+target_compile_definitions(Pavuk PRIVATE GLM_ENABLE_EXPERIMENTAL)
+
+if(WIN32)
+    target_compile_definitions(Pavuk PRIVATE WIN32 _CONSOLE)
+endif()
