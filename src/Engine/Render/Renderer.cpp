@@ -736,7 +736,7 @@ void Renderer::CreateDepthResources() {
 void Renderer::UpdateShadowCubeFace(uint32_t faceIndex, vk::CommandBuffer commandBuffer)
 {
     vk::ClearValue clearValues[2];
-    clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+    clearValues[0].color = vk::ClearColorValue(std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f });
     clearValues[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
     vk::RenderPassBeginInfo renderPassBeginInfo{};
@@ -1332,7 +1332,7 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
         commandBuffer.setScissor(0, 1, &scissor);
 
         for (uint32_t face = 0; face < 6; face++) {
-            UpdateCubeFace(face, commandBuffer);
+            //UpdateShadowCubeFace(face, commandBuffer);
         }
     }
 

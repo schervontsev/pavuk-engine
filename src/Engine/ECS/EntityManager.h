@@ -23,7 +23,7 @@ private:
 
 	std::array<Signature, MAX_ENTITIES> signatures;
 
-	uint32_t entityCount;
+	uint32_t entityCount = 0;
 
 };
 
