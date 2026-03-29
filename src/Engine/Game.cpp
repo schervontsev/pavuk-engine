@@ -23,7 +23,7 @@ void Game::run()
 
     MaterialManager::Instance()->LoadMaterials();
     MeshManager::Instance()->LoadMeshes();
-    
+
     scene = std::make_shared<Scene>();
     scene->Init();
 
@@ -60,6 +60,7 @@ void Game::mainLoop() {
         setInputSystem->SetInput();
 
         simpleControllerSystem->Update(dt);
+        lightControllerSystem->Update(dt);
 
         //TODO: some testing
         rotateSystem->Update(dt);
@@ -96,6 +97,7 @@ void Game::InitECS()
     testSystem = ecsManager.RegisterSystem<TestSystem>();
     setInputSystem = ecsManager.RegisterSystem<SetInputSystem>();
     simpleControllerSystem = ecsManager.RegisterSystem<SimpleControllerSystem>();
+    lightControllerSystem = ecsManager.RegisterSystem<LightControllerSystem>();
 
     Signature renderSignature;
     renderSignature.set(ecsManager.GetComponentType<RenderComponent>());
@@ -127,5 +129,11 @@ void Game::InitECS()
     Signature cameraControllerSignature;
     cameraControllerSignature.set(ecsManager.GetComponentType<InputComponent>());
     cameraControllerSignature.set(ecsManager.GetComponentType<TransformComponent>());
+    cameraControllerSignature.set(ecsManager.GetComponentType<CameraComponent>());
     ecsManager.SetSystemSignature<SimpleControllerSystem>(cameraControllerSignature);
+
+    Signature lightControllerSignature;
+    lightControllerSignature.set(ecsManager.GetComponentType<PointLightComponent>());
+    lightControllerSignature.set(ecsManager.GetComponentType<TransformComponent>());
+    ecsManager.SetSystemSignature<LightControllerSystem>(lightControllerSignature);
 }

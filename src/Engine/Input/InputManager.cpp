@@ -31,8 +31,21 @@ void InputManager::Init(GLFWwindow* newWindow)
 	keyBinds[GLFW_KEY_S] = Input::Action::StepBackward;
 	keyBinds[GLFW_KEY_LEFT] = Input::Action::RotateLeft;
 	keyBinds[GLFW_KEY_RIGHT] = Input::Action::RotateRight;
+	keyBinds[GLFW_KEY_UP] = Input::Action::PitchUp;
+	keyBinds[GLFW_KEY_DOWN] = Input::Action::PitchDown;
+	keyBinds[GLFW_KEY_A] = Input::Action::StrafeLeft;
+	keyBinds[GLFW_KEY_D] = Input::Action::StrafeRight;
 	keyBinds[GLFW_KEY_E] = Input::Action::Ascend;
 	keyBinds[GLFW_KEY_Q] = Input::Action::Descend;
+	// Light (world axes): I/K = Z, J/L = X, U/O = Y
+	keyBinds[GLFW_KEY_I] = Input::Action::LightStepForward;
+	keyBinds[GLFW_KEY_K] = Input::Action::LightStepBackward;
+	keyBinds[GLFW_KEY_J] = Input::Action::LightStrafeLeft;
+	keyBinds[GLFW_KEY_L] = Input::Action::LightStrafeRight;
+	keyBinds[GLFW_KEY_U] = Input::Action::LightAscend;
+	keyBinds[GLFW_KEY_O] = Input::Action::LightDescend;
+	keyBinds[GLFW_KEY_F3] = Input::Action::ToggleNormalView;
+	// Digits 1-6: shadow cubemap face toggles are read via glfwGetKey in Renderer::Update (avoids sharing inputBitmask with movement).
 
 	glfwSetKeyCallback(newWindow, GLFWkeyfun(keyCallback));
 

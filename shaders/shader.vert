@@ -4,11 +4,11 @@ layout(binding = 0) uniform VertexUniformBufferObject {
     mat4 view_proj;
 } ubo;
 
-//push constants block
 layout( push_constant ) uniform constants
 {
 	mat4 transform;
-    mat3 normal_matrix;
+
+    mat4 normal_matrix;
 } PushConstants;
 
 layout(location = 0) in vec3 inPosition;
@@ -24,11 +24,11 @@ layout(location = 3) out vec3 fragNormal;
 layout(location = 4) out vec3 fragWorldPos;
 
 void main() {
-    gl_Position = ubo.view_proj * PushConstants.transform * vec4(inPosition, 1.0);// + gl_InstanceIndex;
+    gl_Position = ubo.view_proj * PushConstants.transform * vec4(inPosition, 1.0);
     fragColor = inColor;
     fragTexCoord = inTexCoord;
     textureIndex = inTextureIndex;
-    
-    fragNormal = normalize(inNormal * PushConstants.normal_matrix);
+
+    fragNormal = normalize(mat3(PushConstants.normal_matrix) * inNormal);
     fragWorldPos = vec3(PushConstants.transform * vec4(inPosition, 1.0));
 }

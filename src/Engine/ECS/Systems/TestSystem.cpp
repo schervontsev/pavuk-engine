@@ -27,6 +27,6 @@ void TestSystem::Update(float dt, Scene* scene)
 		if (wasVisible != render.isVisible) {
 			scene->SetDirty(true);
 		}
-		
+
 	}
 }

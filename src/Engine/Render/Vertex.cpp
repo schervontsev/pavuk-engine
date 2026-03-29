@@ -22,10 +22,9 @@ std::array<vk::VertexInputAttributeDescription, 5> Vertex::getAttributeDescripti
     attributeDescriptions[1].format = vk::Format::eR32G32B32Sfloat;
     attributeDescriptions[1].offset = offsetof(Vertex, color);
 
-
     attributeDescriptions[2].binding = 0;
     attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = vk::Format::eR32G32B32Sfloat;
+    attributeDescriptions[2].format = vk::Format::eR32G32Sfloat;
     attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
 
     attributeDescriptions[3].binding = 0;

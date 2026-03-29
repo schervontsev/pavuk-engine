@@ -10,5 +10,4 @@ void SetInputSystem::SetInput()
 		input.currentInput = InputManager::Instance()->GetInputBitmask();
 	}
 
-	//InputManager::Instance()->ClearInput();
 }

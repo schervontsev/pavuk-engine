@@ -6,7 +6,7 @@
 #include <vector>
 #include <GLFW/glfw3.h>
 
-#define MAX_INPUTS 16
+#define MAX_INPUTS 24
 
 namespace Input
 {
@@ -17,8 +17,20 @@ namespace Input
 		StepBackward,
 		RotateLeft,
 		RotateRight,
+		PitchUp,
+		PitchDown,
+		StrafeLeft,
+		StrafeRight,
 		Ascend,
 		Descend,
+		// World-space light movement (separate from camera)
+		LightStepForward,
+		LightStepBackward,
+		LightStrafeLeft,
+		LightStrafeRight,
+		LightAscend,
+		LightDescend,
+		ToggleNormalView,
 	};
 
 	enum class Axis

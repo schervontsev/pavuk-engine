@@ -12,10 +12,16 @@ struct VertexUniformBufferObject {
 
 struct FragmentUniformBufferObject {
     alignas(16) LightInfo lights[32] = { LightInfo() };
+    float shadow_near = 0.01f;
+    float shadow_far = 20.f;
+    /** 0 = textured + lighting, 1 = world-space normal visualization (RGB) */
+    float render_mode = 0.f;
+    float _pad_render_mode = 0.f;
 };
 
+/** Fragment shader only; per-face light_view_proj is push constants (see shadow_vert). */
 struct ShadowUBOData {
-    alignas(16) glm::mat4 light_view_proj;
     alignas(16) glm::vec4 light_pos;
-    float far_plane;
+    alignas(8) glm::vec2 near_far; // x = near_plane, y = far_plane (std140 padding follows)
+    glm::vec2 _pad_to_32;
 };

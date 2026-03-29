@@ -23,6 +23,7 @@ set(PAVUK_SOURCES
     src/Engine/ECS/Systems/RotateSystem.cpp
     src/Engine/ECS/Systems/SetInputSystem.cpp
     src/Engine/ECS/Systems/SimpleControllerSystem.cpp
+    src/Engine/ECS/Systems/LightControllerSystem.cpp
     src/Engine/ECS/Systems/TestSystem.cpp
     src/Engine/ECS/Components/TransformComponent.cpp
     src/Engine/ResourceManagers/MeshManager.cpp

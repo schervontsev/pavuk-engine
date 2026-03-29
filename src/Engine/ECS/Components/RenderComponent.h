@@ -6,7 +6,7 @@ struct MeshPushConstants {
 };
 
 struct RenderComponent {
-	//RenderComponent(const std::string& newMeshName) : meshName(newMeshName) {}
+
 	MeshPushConstants pushConstants;
 
 	std::string meshName;

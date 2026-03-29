@@ -10,6 +10,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
+#include <array>
 #include <chrono>
 #include <vector>
 #include <cstdint>
@@ -28,6 +29,8 @@ const int HEIGHT = 720;
 
 const int SHADOW_WIDTH = 1024;
 const int SHADOW_HEIGHT = 1024;
+
+inline constexpr bool kEnableShadowPass = true;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -125,13 +128,15 @@ private:
     void CreateShadowDepthSampler();
     vk::ImageView CreateImageView(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags);
     void CreateImage(vk::ImageCreateInfo imageInfo, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory);
-    
+
     void LoadTextureImage(Material& material, const std::string& fileName);
     void TransitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 
     void CreateVertexBuffer(const std::vector<Vertex>& vertices);
     void CreateIndexBuffer(const std::vector<uint32_t>& indices);
     void CreateDebugLightBuffers();
+    void CreateDebugAxesBuffers();
+    void CreateDebugAxesPipeline();
     void CreateUniformBuffers();
     void UpdateUniformBuffer(uint32_t currentImage);
     void CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
@@ -157,6 +162,8 @@ private:
     vk::Format FindSupportedFormat(const std::vector< vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
     vk::Format FindDepthFormat();
 
+    vk::Format FindShadowCubeDepthFormat();
+
     bool HasStencilComponent(VkFormat format);
     uint32_t FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
     bool IsDeviceSuitable(vk::PhysicalDevice device);
@@ -177,12 +184,19 @@ private:
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
     void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 
-
 private:
     std::shared_ptr<RenderSystem> renderSystem;
     std::shared_ptr<UpdateLightSystem> updateLightSystem;
     std::shared_ptr<GLFWwindow> window;
     std::shared_ptr<Scene> scene;
+
+    /** F3: toggle textured vs normals-only debug view */
+    bool normalViewMode = false;
+    bool toggleNormalViewPrev = false;
+
+    /** Main-row keys 1-6 (glfwGetKey): toggle bits for shadow faces (+X,-X,+Y,-Y,+Z,-Z). Default all on. */
+    uint32_t shadowCubeFaceMask = 0x3Fu;
+    std::array<bool, 6> shadowFaceTogglePrev{};
 
     vk::UniqueInstance instance;
 
@@ -208,6 +222,7 @@ private:
     vk::PipelineLayout pipelineLayout;
     vk::Pipeline graphicsPipeline;
     vk::Pipeline debugPipeline;
+    vk::Pipeline debugAxesPipeline;
     vk::PipelineCache graphicsPipelineCache;
     vk::DescriptorSetLayout descriptorSetLayout;
 
@@ -216,6 +231,8 @@ private:
     FrameBufferAttachment depthAttach;
 
     vk::RenderPass shadowPass;
+
+    vk::Format shadowCubeDepthFormat = vk::Format::eUndefined;
     FrameBufferAttachment shadowAttach;
     std::array<vk::ImageView, 6> shadowViews;
     vk::ImageView shadowCubeMapView;
@@ -241,6 +258,10 @@ private:
     vk::DeviceMemory debugLightIndexBufferMemory;
     uint32_t debugLightIndexCount;
 
+    vk::Buffer debugAxesVertexBuffer;
+    vk::DeviceMemory debugAxesVertexBufferMemory;
+    uint32_t debugAxesVertexCount = 0;
+
     std::vector<vk::Buffer> vertexUniformBuffers;
     std::vector<vk::DeviceMemory> vertexUniformBuffersMemory;
 
@@ -257,5 +278,5 @@ private:
     std::vector<vk::Fence> inFlightFences;
     size_t currentFrame = 0;
 
-    bool framebufferResized = false;    
+    bool framebufferResized = false;
 };

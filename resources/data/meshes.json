@@ -31,5 +31,23 @@
 			"FLATSTON",
 			"PATHROCK"
 		]
+	},
+	{
+		"id": "mine",
+		"path": "models/mine.obj",
+		"materials": [
+			"DIRT",
+			"FLATSTON",
+			"PATHROCK",
+			"PATHROCK",
+			"PATHROCK",
+			"PATHROCK",
+			"PATHROCK",
+			"PATHROCK",
+			"PATHROCK",
+			"PATHROCK",
+			"PATHROCK",
+			"PATHROCK"
+		]
 	}
 ]

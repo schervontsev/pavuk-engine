@@ -28,7 +28,7 @@ public:
 	static MeshManager* Instance();
 
 	void LoadMeshes();
-	void LoadModel(Mesh& mesh, const std::string& path, const std::vector<uint32_t>& materials);
+	void LoadModel(Mesh& mesh, const std::string& path, const std::vector<uint32_t>& materials, bool flipNormals = false);
 
 	Mesh* GetMesh(uint32_t handle) { return meshes[meshesByHandle[handle]].get(); }
 	uint32_t GetMeshHandle(const std::string& id) { return meshHandlesById[id]; }

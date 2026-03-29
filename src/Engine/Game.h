@@ -9,6 +9,7 @@
 #include "ECS/Systems/TestSystem.h"
 #include "ECS/Systems/RotateSystem.h"
 #include "ECS/Systems/SetInputSystem.h"
+#include "ECS/Systems/LightControllerSystem.h"
 
 class Game
 {
@@ -30,5 +31,6 @@ private:
 	std::shared_ptr<TestSystem> testSystem;
 	std::shared_ptr<SetInputSystem> setInputSystem;
 	std::shared_ptr<SimpleControllerSystem> simpleControllerSystem;
+	std::shared_ptr<LightControllerSystem> lightControllerSystem;
 };
 

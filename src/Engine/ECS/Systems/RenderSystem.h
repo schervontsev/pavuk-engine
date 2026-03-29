@@ -15,7 +15,8 @@ class RenderSystem : public System
 {
 public:
 	void UpdateTransform();
-	void UpdateCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout);
+
+	void UpdateCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, uint32_t pushConstantOffset = 0);
 	void UpdateMeshHandles();
 
     std::vector<Vertex> GetVertices();
