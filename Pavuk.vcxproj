@@ -43,6 +43,7 @@
     <ClCompile Include="src\Engine\ECS\Systems\UpdateVisibilitySystem.cpp" />
     <ClCompile Include="src\Engine\ECS\Systems\TestSystem.cpp" />
     <ClCompile Include="src\Engine\ECS\Systems\UpdateLightSystem.cpp" />
+    <ClCompile Include="src\Engine\ECS\Systems\ShadowSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engine\ECS\Components\PointLightComponent.h" />
@@ -76,6 +77,8 @@
     <ClInclude Include="src\Engine\ECS\Systems\UpdateVisibilitySystem.h" />
     <ClInclude Include="src\Engine\ECS\Systems\TestSystem.h" />
     <ClInclude Include="src\Engine\ECS\Systems\UpdateLightSystem.h" />
+    <ClInclude Include="src\Engine\ECS\Systems\ShadowSystem.h" />
+    <ClInclude Include="src\Engine\ECS\Components\ShadowComponent.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

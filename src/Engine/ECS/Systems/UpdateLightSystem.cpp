@@ -1,5 +1,6 @@
 #include "UpdateLightSystem.h"
 #include "../../Render/UniformBufferObject.h"
+#include <vector>
 #include "../Components/TransformComponent.h"
 #include "../Components/PointLightComponent.h"
 #include "../ECSManager.h"
@@ -13,6 +14,7 @@ void UpdateLightSystem::UpdateLightInUBO(FragmentUniformBufferObject& ubo)
 		auto& light = ecsManager.GetComponent<PointLightComponent>(entity);
 		ubo.lights[curLight].light_pos = glm::vec4(transform.translation, 0.f);
 		ubo.lights[curLight].light_col = glm::vec4(light.color);
+		ubo.lights[curLight].shadow_cube_index = -1;
 		curLight++;
 		if (curLight >= maxLight) {
 			assert(false);
@@ -21,11 +23,7 @@ void UpdateLightSystem::UpdateLightInUBO(FragmentUniformBufferObject& ubo)
 	}
 }
 
-glm::vec3 UpdateLightSystem::GetFirstLightPosition() const
+std::vector<Entity> UpdateLightSystem::GetOrderedLightEntities() const
 {
-	for (auto const& entity : entities) {
-		auto& transform = ecsManager.GetComponent<TransformComponent>(entity);
-		return transform.translation;
-	}
-	return glm::vec3(0.0f, 0.0f, 0.0f);
+	return std::vector<Entity>(entities.begin(), entities.end());
 }

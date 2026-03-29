@@ -20,6 +20,7 @@ set(PAVUK_SOURCES
     src/Engine/ECS/Systems/UpdateTransformSystem.cpp
     src/Engine/ECS/Systems/UpdateVisibilitySystem.cpp
     src/Engine/ECS/Systems/UpdateLightSystem.cpp
+    src/Engine/ECS/Systems/ShadowSystem.cpp
     src/Engine/ECS/Systems/RotateSystem.cpp
     src/Engine/ECS/Systems/SetInputSystem.cpp
     src/Engine/ECS/Systems/SimpleControllerSystem.cpp

@@ -5,6 +5,7 @@
 #include "../Engine/ECS/Components/RotateComponent.h"
 #include "../Engine/ECS/Components/GirlComponent.h"
 #include "../Engine/ECS/Components/PointLightComponent.h"
+#include "../Engine/ECS/Components/ShadowComponent.h"
 #include "../Engine/ECS/Components/CameraComponent.h"
 #include "../Engine/ECS/Components/InputComponent.h"
 
@@ -65,6 +66,7 @@ void Scene::Init()
 	if (true) {
 		auto pointLight = ecsManager.CreateEntity();
 		ecsManager.AddComponent(pointLight, PointLightComponent({ glm::vec4(1.0, 1.0, 1.0, 1.0) }));
+		ecsManager.AddComponent(pointLight, ShadowComponent{});
 		TransformComponent lightTransform;
 		lightTransform.translation = glm::vec3(0.5f, 0.5f, 1.0f);
 		ecsManager.AddComponent(pointLight, lightTransform);

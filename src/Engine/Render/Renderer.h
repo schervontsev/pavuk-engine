@@ -21,6 +21,7 @@
 #include "../../Scene/Scene.h"
 
 class UpdateLightSystem;
+class ShadowSystem;
 class RenderSystem;
 
 //TODO: move to config
@@ -86,6 +87,7 @@ public:
     void SetScene(const std::shared_ptr<Scene>& scene);
     void SetRenderSystem(const std::shared_ptr<RenderSystem>& renderSystem);
     void SetUpdateLightSystem(const std::shared_ptr<UpdateLightSystem>& newUpdateLightSystem);
+    void SetShadowSystem(const std::shared_ptr<ShadowSystem>& newShadowSystem);
 
     void UpdateBuffers();
 
@@ -112,7 +114,7 @@ private:
     vk::UniqueShaderModule CreateShaderModule(const std::vector<char>& code);
 
     void CreateDepthResources();
-    void UpdateShadowCubeFace(uint32_t faceIndex, vk::CommandBuffer commandBuffer);
+    void UpdateShadowCubeFace(uint32_t faceIndex, uint32_t cubeIndex, vk::CommandBuffer commandBuffer);
     void CreateShadowmapImage();
     void CreateTextureImages();
 
@@ -187,6 +189,7 @@ private:
 private:
     std::shared_ptr<RenderSystem> renderSystem;
     std::shared_ptr<UpdateLightSystem> updateLightSystem;
+    std::shared_ptr<ShadowSystem> shadowSystem;
     std::shared_ptr<GLFWwindow> window;
     std::shared_ptr<Scene> scene;
 
@@ -234,9 +237,9 @@ private:
 
     vk::Format shadowCubeDepthFormat = vk::Format::eUndefined;
     FrameBufferAttachment shadowAttach;
-    std::array<vk::ImageView, 6> shadowViews;
+    std::vector<vk::ImageView> shadowViews;
     vk::ImageView shadowCubeMapView;
-    std::array<vk::Framebuffer, 6> shadowBuffers;
+    std::vector<vk::Framebuffer> shadowBuffers;
     vk::Sampler shadowDepthSampler;
     vk::DescriptorSetLayout shadowDescriptorSetLayout;
     vk::PipelineLayout shadowPipelineLayout;

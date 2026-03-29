@@ -8,6 +8,8 @@
 #include "ECS/Components/CameraComponent.h"
 #include "ECS/Components/InputComponent.h"
 #include "ECS/Components/PointLightComponent.h"
+#include "ECS/Components/ShadowComponent.h"
+#include "ECS/Systems/ShadowSystem.h"
 #include "ResourceManagers/MaterialManager.h"
 #include "ResourceManagers/MeshManager.h"
 #include "Input/InputManager.h"
@@ -32,6 +34,7 @@ void Game::run()
     renderer->SetScene(scene);
     renderer->SetRenderSystem(renderSystem);
     renderer->SetUpdateLightSystem(updateLightSystem);
+    renderer->SetShadowSystem(shadowSystem);
 
 	InputManager::Instance()->Init(renderer->initWindow());
 
@@ -89,9 +92,11 @@ void Game::InitECS()
     ecsManager.RegisterComponent<CameraComponent>();
     ecsManager.RegisterComponent<InputComponent>();
     ecsManager.RegisterComponent<PointLightComponent>();
+    ecsManager.RegisterComponent<ShadowComponent>();
 
     renderSystem = ecsManager.RegisterSystem<RenderSystem>();
     updateLightSystem = ecsManager.RegisterSystem<UpdateLightSystem>();
+    shadowSystem = ecsManager.RegisterSystem<ShadowSystem>();
     updateTransformSystem = ecsManager.RegisterSystem<UpdateTransformSystem>();
     rotateSystem = ecsManager.RegisterSystem<RotateSystem>();
     testSystem = ecsManager.RegisterSystem<TestSystem>();
@@ -108,6 +113,12 @@ void Game::InitECS()
     updateLightSignature.set(ecsManager.GetComponentType<PointLightComponent>());
     updateLightSignature.set(ecsManager.GetComponentType<TransformComponent>());
     ecsManager.SetSystemSignature<UpdateLightSystem>(updateLightSignature);
+
+    Signature shadowSystemSignature;
+    shadowSystemSignature.set(ecsManager.GetComponentType<PointLightComponent>());
+    shadowSystemSignature.set(ecsManager.GetComponentType<TransformComponent>());
+    shadowSystemSignature.set(ecsManager.GetComponentType<ShadowComponent>());
+    ecsManager.SetSystemSignature<ShadowSystem>(shadowSystemSignature);
 
     Signature transformSignature;
     transformSignature.set(ecsManager.GetComponentType<TransformComponent>());

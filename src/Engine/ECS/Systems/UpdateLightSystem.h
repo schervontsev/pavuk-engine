@@ -1,6 +1,8 @@
 #pragma once
 #include "System.h"
 #include <glm/glm.hpp>
+#include <vector>
+
 struct FragmentUniformBufferObject;
 
 class UpdateLightSystem :
@@ -8,6 +10,6 @@ class UpdateLightSystem :
 {
 public:
     void UpdateLightInUBO(FragmentUniformBufferObject& ubo);
-    glm::vec3 GetFirstLightPosition() const;
+    std::vector<Entity> GetOrderedLightEntities() const;
 };
 

@@ -24,6 +24,7 @@
 #include "../ECS/Components/CameraComponent.h"
 #include "../ECS/Components/RenderComponent.h"
 #include "../ECS/Systems/UpdateLightSystem.h"
+#include "../ECS/Systems/ShadowSystem.h"
 #include <vector>
 #include "../Input/InputManager.h"
 
@@ -58,6 +59,11 @@ void Renderer::SetRenderSystem(const std::shared_ptr<RenderSystem>& newRenderSys
 void Renderer::SetUpdateLightSystem(const std::shared_ptr<UpdateLightSystem>& newUpdateLightSystem)
 {
     updateLightSystem = newUpdateLightSystem;
+}
+
+void Renderer::SetShadowSystem(const std::shared_ptr<ShadowSystem>& newShadowSystem)
+{
+    shadowSystem = newShadowSystem;
 }
 
 void Renderer::InitVulkan() {
@@ -141,12 +147,13 @@ void Renderer::Cleanup() {
     device->destroyImage(depthAttach.image, nullptr);
     device->freeMemory(depthAttach.mem, nullptr);
 
-    device->destroyImageView(shadowAttach.view, nullptr);
     device->destroyImage(shadowAttach.image, nullptr);
     device->freeMemory(shadowAttach.mem, nullptr);
 
-    for (uint32_t i = 0; i < 6; i++) {
+    for (size_t i = 0; i < shadowBuffers.size(); i++) {
         device->destroyFramebuffer(shadowBuffers[i], nullptr);
+    }
+    for (size_t i = 0; i < shadowViews.size(); i++) {
         device->destroyImageView(shadowViews[i], nullptr);
     }
     device->destroyImageView(shadowCubeMapView, nullptr);
@@ -340,6 +347,7 @@ void Renderer::CreateLogicalDevice() {
 
     auto deviceFeatures = vk::PhysicalDeviceFeatures();
     deviceFeatures.samplerAnisotropy = VK_TRUE;
+    deviceFeatures.imageCubeArray = VK_TRUE;
 
     auto indexingFeatures = vk::PhysicalDeviceDescriptorIndexingFeatures();
     indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
@@ -901,8 +909,10 @@ void Renderer::CreateShadowFramebuffers() {
     framebufferInfo.height = SHADOW_HEIGHT;
     framebufferInfo.layers = 1;
 
+    shadowBuffers.resize(shadowViews.size());
+
     try {
-        for (uint32_t i = 0; i < 6; i++) {
+        for (uint32_t i = 0; i < static_cast<uint32_t>(shadowViews.size()); i++) {
             framebufferInfo.attachmentCount = 1;
             framebufferInfo.pAttachments = &shadowViews[i];
             shadowBuffers[i] = device->createFramebuffer(framebufferInfo);
@@ -1110,9 +1120,12 @@ void Renderer::CreateDepthResources() {
     depthAttach.view = CreateImageView(depthAttach.image, depthFormat, vk::ImageAspectFlagBits::eDepth);
 }
 
-void Renderer::UpdateShadowCubeFace(uint32_t faceIndex, vk::CommandBuffer commandBuffer)
+void Renderer::UpdateShadowCubeFace(uint32_t faceIndex, uint32_t cubeIndex, vk::CommandBuffer commandBuffer)
 {
-    glm::vec3 lightPos = updateLightSystem ? updateLightSystem->GetFirstLightPosition() : glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+    if (shadowSystem) {
+        lightPos = shadowSystem->GetShadowLightPosition(static_cast<size_t>(cubeIndex));
+    }
 
     glm::vec3 direction;
     glm::vec3 up;
@@ -1142,9 +1155,10 @@ void Renderer::UpdateShadowCubeFace(uint32_t faceIndex, vk::CommandBuffer comman
     memcpy(data, &shadowUbo, sizeof(ShadowUBOData));
     device->unmapMemory(shadowUniformBuffersMemory[currentFrame]);
 
+    const uint32_t fbIndex = cubeIndex * 6u + faceIndex;
     vk::RenderPassBeginInfo renderPassBeginInfo{};
     renderPassBeginInfo.renderPass = shadowPass;
-    renderPassBeginInfo.framebuffer = shadowBuffers[faceIndex];
+    renderPassBeginInfo.framebuffer = shadowBuffers[fbIndex];
     renderPassBeginInfo.renderArea.extent.width = SHADOW_WIDTH;
     renderPassBeginInfo.renderArea.extent.height = SHADOW_HEIGHT;
     renderPassBeginInfo.clearValueCount = 0;
@@ -1174,6 +1188,8 @@ void Renderer::UpdateShadowCubeFace(uint32_t faceIndex, vk::CommandBuffer comman
 }
 
 void Renderer::CreateShadowmapImage() {
+    const uint32_t shadowArrayLayers = 6u * static_cast<uint32_t>(MAX_SHADOW_LIGHTS);
+
     vk::ImageCreateInfo imageInfo {};
     imageInfo.flags = vk::ImageCreateFlagBits::eCubeCompatible;
     imageInfo.imageType = vk::ImageType::e2D;
@@ -1181,7 +1197,7 @@ void Renderer::CreateShadowmapImage() {
     imageInfo.extent.height = SHADOW_HEIGHT;
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = 1;
-    imageInfo.arrayLayers = 6;
+    imageInfo.arrayLayers = shadowArrayLayers;
     imageInfo.format = shadowCubeDepthFormat;
     imageInfo.tiling = vk::ImageTiling::eOptimal;
     imageInfo.initialLayout = vk::ImageLayout::eUndefined;
@@ -1191,7 +1207,8 @@ void Renderer::CreateShadowmapImage() {
     imageInfo.sharingMode = vk::SharingMode::eExclusive;
 
     CreateImage(imageInfo, vk::MemoryPropertyFlagBits::eDeviceLocal, shadowAttach.image, shadowAttach.mem);
-    shadowAttach.view = CreateImageView(shadowAttach.image, shadowCubeDepthFormat, vk::ImageAspectFlagBits::eDepth);
+
+    shadowViews.resize(shadowArrayLayers);
 
     vk::ImageViewCreateInfo viewInfo = {};
     viewInfo.image = shadowAttach.image;
@@ -1203,7 +1220,7 @@ void Renderer::CreateShadowmapImage() {
     viewInfo.subresourceRange.levelCount = 1;
     viewInfo.subresourceRange.layerCount = 1;
 
-    for (uint32_t i = 0; i < 6; i++) {
+    for (uint32_t i = 0; i < shadowArrayLayers; i++) {
         viewInfo.subresourceRange.baseArrayLayer = i;
         try {
             shadowViews[i] = device->createImageView(viewInfo);
@@ -1214,18 +1231,18 @@ void Renderer::CreateShadowmapImage() {
 
     vk::ImageViewCreateInfo cubeViewInfo{};
     cubeViewInfo.image = shadowAttach.image;
-    cubeViewInfo.viewType = vk::ImageViewType::eCube;
+    cubeViewInfo.viewType = vk::ImageViewType::eCubeArray;
     cubeViewInfo.format = shadowCubeDepthFormat;
     cubeViewInfo.components = vk::ComponentMapping();
     cubeViewInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
     cubeViewInfo.subresourceRange.baseMipLevel = 0;
     cubeViewInfo.subresourceRange.levelCount = 1;
     cubeViewInfo.subresourceRange.baseArrayLayer = 0;
-    cubeViewInfo.subresourceRange.layerCount = 6;
+    cubeViewInfo.subresourceRange.layerCount = shadowArrayLayers;
     try {
         shadowCubeMapView = device->createImageView(cubeViewInfo);
     } catch (vk::SystemError err) {
-        throw std::runtime_error("failed to create shadow cube map view!");
+        throw std::runtime_error("failed to create shadow cube array map view!");
     }
 }
 
@@ -1848,6 +1865,7 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
     if constexpr (kEnableShadowPass) {
 
         static bool shadowFirstFrame = true;
+        const uint32_t shadowArrayLayers = 6u * static_cast<uint32_t>(MAX_SHADOW_LIGHTS);
         vk::ImageMemoryBarrier shadowToWriteBarrier{};
         shadowToWriteBarrier.oldLayout = shadowFirstFrame ? vk::ImageLayout::eUndefined : vk::ImageLayout::eShaderReadOnlyOptimal;
         shadowToWriteBarrier.newLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
@@ -1858,7 +1876,7 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
         shadowToWriteBarrier.subresourceRange.baseMipLevel = 0;
         shadowToWriteBarrier.subresourceRange.levelCount = 1;
         shadowToWriteBarrier.subresourceRange.baseArrayLayer = 0;
-        shadowToWriteBarrier.subresourceRange.layerCount = 6;
+        shadowToWriteBarrier.subresourceRange.layerCount = shadowArrayLayers;
         shadowToWriteBarrier.srcAccessMask = shadowFirstFrame ? vk::AccessFlags() : vk::AccessFlagBits::eShaderRead;
         shadowToWriteBarrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
         commandBuffer.pipelineBarrier(
@@ -1894,7 +1912,7 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
             clearPrep.subresourceRange.baseMipLevel = 0;
             clearPrep.subresourceRange.levelCount = 1;
             clearPrep.subresourceRange.baseArrayLayer = 0;
-            clearPrep.subresourceRange.layerCount = 6;
+            clearPrep.subresourceRange.layerCount = shadowArrayLayers;
             clearPrep.srcAccessMask = vk::AccessFlags();
             clearPrep.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
             commandBuffer.pipelineBarrier(
@@ -1909,7 +1927,7 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
             clearRange.baseMipLevel = 0;
             clearRange.levelCount = 1;
             clearRange.baseArrayLayer = 0;
-            clearRange.layerCount = 6;
+            clearRange.layerCount = shadowArrayLayers;
             commandBuffer.clearDepthStencilImage(shadowAttach.image, vk::ImageLayout::eTransferDstOptimal, clearFar, clearRange);
 
             vk::ImageMemoryBarrier clearDone{};
@@ -1922,7 +1940,7 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
             clearDone.subresourceRange.baseMipLevel = 0;
             clearDone.subresourceRange.levelCount = 1;
             clearDone.subresourceRange.baseArrayLayer = 0;
-            clearDone.subresourceRange.layerCount = 6;
+            clearDone.subresourceRange.layerCount = shadowArrayLayers;
             clearDone.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
             clearDone.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
             commandBuffer.pipelineBarrier(
@@ -1932,9 +1950,15 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
                 0, nullptr, 0, nullptr, 1, &clearDone);
         }
 
-        for (uint32_t face = 0; face < 6; face++) {
-            if ((shadowCubeFaceMask & (1u << face)) != 0u) {
-                UpdateShadowCubeFace(face, commandBuffer);
+        uint32_t shadowLightCount = 0;
+        if (shadowSystem) {
+            shadowLightCount = static_cast<uint32_t>(std::min(shadowSystem->entities.size(), static_cast<size_t>(MAX_SHADOW_LIGHTS)));
+        }
+        for (uint32_t cube = 0; cube < shadowLightCount; cube++) {
+            for (uint32_t face = 0; face < 6; face++) {
+                if ((shadowCubeFaceMask & (1u << face)) != 0u) {
+                    UpdateShadowCubeFace(face, cube, commandBuffer);
+                }
             }
         }
 
@@ -1948,7 +1972,7 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
         shadowBarrier.subresourceRange.baseMipLevel = 0;
         shadowBarrier.subresourceRange.levelCount = 1;
         shadowBarrier.subresourceRange.baseArrayLayer = 0;
-        shadowBarrier.subresourceRange.layerCount = 6;
+        shadowBarrier.subresourceRange.layerCount = shadowArrayLayers;
         shadowBarrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite
             | vk::AccessFlagBits::eDepthStencilAttachmentRead
             | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
@@ -1972,7 +1996,7 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
         shadowDisabledBarrier.subresourceRange.baseMipLevel = 0;
         shadowDisabledBarrier.subresourceRange.levelCount = 1;
         shadowDisabledBarrier.subresourceRange.baseArrayLayer = 0;
-        shadowDisabledBarrier.subresourceRange.layerCount = 6;
+        shadowDisabledBarrier.subresourceRange.layerCount = 6u * static_cast<uint32_t>(MAX_SHADOW_LIGHTS);
         shadowDisabledBarrier.srcAccessMask = shadowImgShaderReadReady ? vk::AccessFlagBits::eShaderRead : vk::AccessFlags();
         shadowDisabledBarrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
         commandBuffer.pipelineBarrier(
@@ -2039,21 +2063,24 @@ void Renderer::RecordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
     }
     commandBuffer.draw(debugAxesVertexCount, 1, 0, 0);
 
-    if (updateLightSystem) {
+    if (shadowSystem) {
         commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, debugPipeline);
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
         vk::Buffer debugVertexBuffers[] = { debugLightVertexBuffer };
         vk::DeviceSize debugOffsets[] = { 0 };
         commandBuffer.bindVertexBuffers(0, 1, debugVertexBuffers, debugOffsets);
         commandBuffer.bindIndexBuffer(debugLightIndexBuffer, 0, vk::IndexType::eUint32);
-        glm::vec3 lightPos = updateLightSystem->GetFirstLightPosition();
         const float debugMarkerScale = 0.05f;
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(debugMarkerScale));
-        MeshPushConstants debugPushConstants{};
-        debugPushConstants.transform = model;
-        debugPushConstants.normal_matrix = glm::transpose(glm::inverse(model));
-        commandBuffer.pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(MeshPushConstants), &debugPushConstants);
-        commandBuffer.drawIndexed(debugLightIndexCount, 1, 0, 0, 0);
+        const size_t nShadow = shadowSystem->entities.size();
+        for (size_t i = 0; i < nShadow; ++i) {
+            glm::vec3 lightPos = shadowSystem->GetShadowLightPosition(i);
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(debugMarkerScale));
+            MeshPushConstants debugPushConstants{};
+            debugPushConstants.transform = model;
+            debugPushConstants.normal_matrix = glm::transpose(glm::inverse(model));
+            commandBuffer.pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(MeshPushConstants), &debugPushConstants);
+            commandBuffer.drawIndexed(debugLightIndexCount, 1, 0, 0, 0);
+        }
     }
 
     commandBuffer.endRenderPass();
@@ -2100,6 +2127,9 @@ void Renderer::UpdateUniformBuffer(uint32_t currentImage) {
     ubo_v.view_proj = proj * view;
     if (updateLightSystem) {
         updateLightSystem->UpdateLightInUBO(ubo_f);
+        if (shadowSystem) {
+            shadowSystem->AssignShadowCubeIndices(ubo_f, updateLightSystem->GetOrderedLightEntities());
+        }
     }
     ubo_f.shadow_near = 0.0001f;
     ubo_f.shadow_far = 50.0f;
@@ -2278,7 +2308,8 @@ bool Renderer::IsDeviceSuitable(vk::PhysicalDevice physicalDevice) {
     vk::PhysicalDeviceFeatures supportedFeatures;
     physicalDevice.getFeatures(&supportedFeatures);
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy
+        && supportedFeatures.imageCubeArray;
 }
 
 bool Renderer::CheckDeviceExtensionSupport(vk::PhysicalDevice device) {
